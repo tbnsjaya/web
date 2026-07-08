@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* === CUSTOM DESIGN TOKENS === */
 :root {
   --radius: 0.75rem;
