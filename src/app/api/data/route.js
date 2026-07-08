@@ -1,6 +1,8 @@
 // API Route: Proxy for Google Apps Script
 // Keeps the API URL hidden from client-side code
 
+export const maxDuration = 60; // Increase Vercel timeout to 60 seconds
+
 export async function GET() {
   const apiUrl = process.env.GOOGLE_APPS_SCRIPT_URL;
   if (!apiUrl) {
