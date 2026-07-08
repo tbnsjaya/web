@@ -1,16 +1,14 @@
 /* ============================================================
    TB NS Jaya — Global Stylesheet & Design Tokens
-   Design System: Industrial Modern
+   Design System: Industrial Modern (Tailwind CSS v4 Native)
    ============================================================ */
 
-/* Font dikelola via next/font/google di src/app/layout.tsx */
 @import "tailwindcss";
 
 /* ------------------------------------------------------------
-   2. DESIGN TOKENS — CSS Custom Properties
+   1. DESIGN TOKENS (Tailwind v4 Theme Configuration)
    ------------------------------------------------------------ */
-:root {
-  /* --- Font Families --- */
+@theme {
   --font-heading: "Outfit", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
 
@@ -40,20 +38,20 @@
   --color-slate-950: #020617;
 
   /* --- Color: Semantic --- */
-  --color-success: #22c55e;   /* Green-500 */
+  --color-success: #22c55e;
   --color-success-bg: #f0fdf4;
   --color-success-text: #15803d;
-  --color-warning: #f59e0b;   /* Amber-500 */
+  --color-warning: #f59e0b;
   --color-warning-bg: #fffbeb;
   --color-warning-text: #b45309;
-  --color-danger: #ef4444;    /* Red-500 */
+  --color-danger: #ef4444;
   --color-danger-bg: #fef2f2;
   --color-danger-text: #b91c1c;
-  --color-info: #3b82f6;      /* Blue-500 */
+  --color-info: #3b82f6;
   --color-info-bg: #eff6ff;
   --color-info-text: #1d4ed8;
 
-  /* --- Light Mode Tokens --- */
+  /* --- Layout Tokens --- */
   --background: var(--color-slate-50);
   --surface: #ffffff;
   --surface-elevated: #ffffff;
@@ -74,61 +72,14 @@
   --radius-xl: 16px;
   --radius-full: 9999px;
 
-  /* --- Shadow (Elevation) --- */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
-
-  /* --- Spacing Scale (menggunakan unit 4px) --- */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
-
-  /* --- Z-Index Scale --- */
-  --z-base: 0;
-  --z-dropdown: 40;
-  --z-sticky: 50;
-  --z-overlay: 60;
-  --z-modal: 70;
-  --z-toast: 100;
-
-  /* --- Container Width --- */
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1440px;
-
   /* --- Animation Duration --- */
   --duration-fast: 0.15s;
   --duration-base: 0.2s;
   --duration-slow: 0.3s;
   --duration-slower: 0.5s;
-
-  /* --- Animation Easing --- */
-  --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
-  /* --- Opacity --- */
-  --opacity-disabled: 0.5;
-  --opacity-overlay: 0.6;
-
-  /* --- Border Width --- */
-  --border-width: 1px;
-  --border-width-2: 2px;
 }
 
-/* --- Dark Mode Tokens --- */
+/* --- Dark Mode Variables Overrides --- */
 .dark {
   --background: var(--color-slate-950);
   --surface: var(--color-slate-900);
@@ -142,15 +93,10 @@
   --primary: var(--color-primary-500);
   --primary-hover: var(--color-primary-400);
   --primary-foreground: #ffffff;
-
-  /* Shadow menjadi lebih gelap di dark mode */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
 }
 
 /* ------------------------------------------------------------
-   3. GLOBAL BASE STYLES
+   2. GLOBAL BASE STYLES
    ------------------------------------------------------------ */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -172,8 +118,8 @@ body {
   background-color: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color var(--duration-slow) var(--ease-out),
-              color var(--duration-slow) var(--ease-out);
+  transition: background-color var(--duration-slow) cubic-bezier(0.0, 0, 0.2, 1),
+              color var(--duration-slow) cubic-bezier(0.0, 0, 0.2, 1);
 }
 
 /* --- Heading Typography --- */
@@ -184,20 +130,23 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-h1 { font-size: 2.25rem; font-weight: 700; }  /* 36px */
-h2 { font-size: 1.5rem;  font-weight: 600; }  /* 24px */
-h3 { font-size: 1.25rem; font-weight: 600; }  /* 20px */
-h4 { font-size: 1.125rem; font-weight: 500; } /* 18px */
-h5 { font-size: 1rem;    font-weight: 500; }  /* 16px */
-h6 { font-size: 0.875rem; font-weight: 500; } /* 14px */
+h1 { font-size: 2.25rem; font-weight: 700; }
+h2 { font-size: 1.5rem;  font-weight: 600; }
+h3 { font-size: 1.25rem; font-weight: 600; }
+h4 { font-size: 1.125rem; font-weight: 500; }
+h5 { font-size: 1rem;    font-weight: 500; }
+h6 { font-size: 0.875rem; font-weight: 500; }
 
-/* --- Link --- */
+/* --- Global Link Styling --- */
 a {
-  color: var(--primary);
+  color: inherit; /* Ubah ke inherit agar tidak menimpa text-white pada tombol */
   text-decoration: none;
-  transition: color var(--duration-base) var(--ease-out);
+  transition: color var(--duration-base) cubic-bezier(0.0, 0, 0.2, 1);
 }
-a:hover { color: var(--primary-hover); }
+
+a:hover {
+  color: var(--primary);
+}
 
 /* --- Image --- */
 img, picture, video, canvas, svg {
@@ -217,11 +166,21 @@ input, button, textarea, select {
   border-radius: var(--radius-sm);
 }
 
-/* --- Scrollbar (Chrome/Edge) --- */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--radius-full); }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
 
 /* --- Selection --- */
 ::selection {
@@ -230,37 +189,37 @@ input, button, textarea, select {
 }
 
 /* ------------------------------------------------------------
-   4. UTILITY CLASSES
+   3. UTILITY CLASSES
    ------------------------------------------------------------ */
 .container-app {
   width: 100%;
-  max-width: var(--container-xl);
+  max-width: 1280px;
   margin-left: auto;
   margin-right: auto;
-  padding-left: var(--space-4);
-  padding-right: var(--space-4);
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 @media (min-width: 640px) {
   .container-app {
-    padding-left: var(--space-6);
-    padding-right: var(--space-6);
+    padding-left: 24px;
+    padding-right: 24px;
   }
 }
 
 @media (min-width: 1024px) {
   .container-app {
-    padding-left: var(--space-8);
-    padding-right: var(--space-8);
+    padding-left: 32px;
+    padding-right: 32px;
   }
 }
 
 /* --- Surface Card --- */
 .card {
   background-color: var(--surface);
-  border: var(--border-width) solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 /* --- Skeleton Loading --- */

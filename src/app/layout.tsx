@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { ThemeProvider, SWRProvider, AuthProvider } from "@/components/providers";
 import { Toaster } from "sonner";
-import "@/app/globals.css";
+import "@/app/global.css";
 
 /* ------------------------------------------------------------
    Font Configuration
