@@ -1,47 +1,34 @@
-"use client";
-
-import React, { use } from "react";
-import useSWR from "swr";
+import React from "react";
 import Link from "next/link";
 import { ProductService } from "@/services/products";
-import type { Product } from "@/types";
 import { ShoppingBag, ChevronRight, MessageSquare, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 interface ProductDetailProps {
   params: Promise<{ slug: string }>;
 }
 
-export default function ProductDetailPage({ params }: ProductDetailProps) {
-  const { slug } = use(params);
+export async function generateStaticParams() {
+  try {
+    const res = await ProductService.getAll();
+    const items = res?.data?.items || [];
+    return items.map((prod) => ({
+      slug: prod.slug,
+    }));
+  } catch (e) {
+    return [];
+  }
+}
 
-  // Fetch products and find the matching one
-  const { data: productsRes, isLoading } = useSWR("publicProducts", () =>
-    ProductService.getAll({ page: 1, perPage: 100 })
-  );
+export default async function ProductDetailPage({ params }: ProductDetailProps) {
+  const { slug } = await params;
+  const productsRes = await ProductService.getAll();
   const product = productsRes?.data?.items?.find((p) => p.slug === slug);
 
-  // WhatsApp helper
   const getWaLink = (productName: string, price: number) => {
     const phoneNum = "6282330449041";
     const msg = `Halo TB NS Jaya, saya ingin memesan produk: *${productName}* seharga Rp ${price.toLocaleString("id-ID")}. Apakah stoknya ready?`;
     return `https://wa.me/${phoneNum}?text=${encodeURIComponent(msg)}`;
   };
-
-  if (isLoading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 space-y-8 animate-pulse">
-        <div className="h-6 bg-[var(--border)] w-1/4 rounded" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="bg-[var(--border)] h-[400px] rounded-xl" />
-          <div className="space-y-4">
-            <div className="h-10 bg-[var(--border)] w-3/4 rounded" />
-            <div className="h-6 bg-[var(--border)] w-1/3 rounded" />
-            <div className="h-32 bg-[var(--border)] w-full rounded" />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (!product) {
     return (
@@ -147,16 +134,4 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
       </div>
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  try {
-    const res = await ProductService.getAll();
-    const items = res?.data?.items || [];
-    return items.map((prod) => ({
-      slug: prod.slug,
-    }));
-  } catch (e) {
-    return [];
-  }
 }

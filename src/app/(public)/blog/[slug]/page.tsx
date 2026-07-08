@@ -1,38 +1,28 @@
-"use client";
-
-import React, { use } from "react";
-import useSWR from "swr";
+import React from "react";
 import Link from "next/link";
 import { BlogService } from "@/services/blog";
-import { FileText, Calendar, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { FileText, Calendar, User, ArrowLeft } from "lucide-react";
 
 interface BlogDetailProps {
   params: Promise<{ slug: string }>;
 }
 
-export default function BlogDetailPage({ params }: BlogDetailProps) {
-  const { slug } = use(params);
-
-  // Fetch blogs list and find the matched slug
-  const { data: blogsRes, isLoading } = useSWR("publicBlogs", () =>
-    BlogService.getAll({ page: 1, perPage: 100, publishedOnly: true })
-  );
-  const post = blogsRes?.data?.items?.find((b) => b.slug === slug);
-
-  if (isLoading) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-12 space-y-6 animate-pulse">
-        <div className="h-6 bg-[var(--border)] w-1/4 rounded" />
-        <div className="h-10 bg-[var(--border)] w-3/4 rounded" />
-        <div className="h-6 bg-[var(--border)] w-1/3 rounded" />
-        <div className="h-[300px] bg-[var(--border)] rounded-xl w-full" />
-        <div className="space-y-2">
-          <div className="h-4 bg-[var(--border)] w-full rounded" />
-          <div className="h-4 bg-[var(--border)] w-5/6 rounded" />
-        </div>
-      </div>
-    );
+export async function generateStaticParams() {
+  try {
+    const res = await BlogService.getAll();
+    const items = res?.data?.items || [];
+    return items.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch (e) {
+    return [];
   }
+}
+
+export default async function BlogDetailPage({ params }: BlogDetailProps) {
+  const { slug } = await params;
+  const res = await BlogService.getAll();
+  const post = res?.data?.items?.find((b) => b.slug === slug);
 
   if (!post) {
     return (
@@ -105,16 +95,4 @@ export default function BlogDetailPage({ params }: BlogDetailProps) {
       />
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  try {
-    const res = await BlogService.getAll();
-    const items = res?.data?.items || [];
-    return items.map((post) => ({
-      slug: post.slug,
-    }));
-  } catch (e) {
-    return [];
-  }
 }
