@@ -106,3 +106,15 @@ export default function BlogDetailPage({ params }: BlogDetailProps) {
     </div>
   );
 }
+
+export async function generateStaticParams() {
+  try {
+    const res = await BlogService.getAll();
+    const items = res?.data?.items || [];
+    return items.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch (e) {
+    return [];
+  }
+}

@@ -148,3 +148,15 @@ export default function ProductDetailPage({ params }: ProductDetailProps) {
     </div>
   );
 }
+
+export async function generateStaticParams() {
+  try {
+    const res = await ProductService.getAll();
+    const items = res?.data?.items || [];
+    return items.map((prod) => ({
+      slug: prod.slug,
+    }));
+  } catch (e) {
+    return [];
+  }
+}
