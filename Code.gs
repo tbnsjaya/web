@@ -88,6 +88,10 @@ var PERMISSION_MATRIX = {
     "kasbon.read",
     "kasbon.create",
     "notifications.read"
+  ],
+  guest: [
+    "products.read",
+    "categories.read"
   ]
 };
 
@@ -397,7 +401,21 @@ function doPost(e) {
     // Verify token
     var userPayload = verifyJwt(token);
     if (!userPayload) {
-      return jsonResponse(false, HTTP_CODES.UNAUTHORIZED, "Token tidak valid atau kedaluwarsa");
+      var publicActions = [
+        "getProducts",
+        "getCategories",
+        "getBlogs",
+        "getBlogCategories",
+        "getBanners",
+        "getPromotions",
+        "getWebsiteSettings",
+        "getAnalyticsSettings"
+      ];
+      if (publicActions.indexOf(action) !== -1) {
+        userPayload = { role: "guest", userId: "guest" };
+      } else {
+        return jsonResponse(false, HTTP_CODES.UNAUTHORIZED, "Token tidak valid atau kedaluwarsa");
+      }
     }
     
     // Route request

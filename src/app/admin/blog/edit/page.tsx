@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { BlogService } from "@/services/blog";
 import { MediaPicker } from "@/components/cms/MediaPicker";
@@ -23,12 +23,10 @@ const blogSchema = z.object({
 
 type BlogFormValues = z.infer<typeof blogSchema>;
 
-interface EditBlogPageProps {
-  params: Promise<{ id: string }>;
-}
+function EditBlogPageContent() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
 
-export default function EditBlogPage({ params }: EditBlogPageProps) {
-  const { id } = use(params);
   const router = useRouter();
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -324,3 +322,16 @@ export default function EditBlogPage({ params }: EditBlogPageProps) {
     </div>
   );
 }
+
+export default function EditBlogPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-12 flex justify-center items-center">
+        <Loader2 className="w-8 h-8 text-[var(--primary)] animate-spin" />
+      </div>
+    }>
+      <EditBlogPageContent />
+    </Suspense>
+  );
+}
+

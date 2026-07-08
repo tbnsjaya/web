@@ -208,7 +208,7 @@ export default function BlogCmsPage() {
                         <ExternalLink className="w-4 h-4" />
                       </Link>
                       <Link
-                        href={`/admin/blog/${post.id}/edit`}
+                        href={`/admin/blog/edit?id=${post.id}`}
                         title="Edit Artikel"
                         className="p-2 border border-[var(--border)] hover:bg-[var(--color-slate-100)] text-[var(--text-muted)] hover:text-[var(--primary)] rounded-lg transition-colors cursor-pointer"
                       >

@@ -52,7 +52,7 @@ export const ROUTES = {
   // Blog CMS
   BLOG_CMS: "/admin/blog",
   BLOG_CREATE: "/admin/blog/create",
-  BLOG_EDIT: (id: string) => `/admin/blog/${id}/edit`,
+  BLOG_EDIT: (id: string) => `/admin/blog/edit?id=${id}`,
 
   // Media
   MEDIA: "/admin/media",

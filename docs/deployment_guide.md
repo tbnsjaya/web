@@ -21,7 +21,7 @@ Panduan deployment lengkap Next.js 16 (Static Export), Google Apps Script, dan G
 ## 2. Setup Environment Variables Local
 1. Buat file `.env.local` di folder root project:
    ```env
-   NEXT_PUBLIC_API_URL=https://script.google.com/macros/s/AKfycbw78VLFu2utibnz7T2PheYMW-O3R7i-fbDeFM8e9BmiX32dNNgofJ_xzUNhsQPe_mnpIA/exec
+   NEXT_PUBLIC_API_URL=https://script.google.com/macros/s/AKfycbzqfFXx7y4CfVDJGv5twLxih4z3Q1sakewZrlw-2v2rXs683yBie0HNgOllM4DAg9brMQ/exec
    NEXT_PUBLIC_GA_MEASUREMENT_ID=G-P1M8K23
    NEXT_PUBLIC_GTM_ID=GTM-P1M8K23
    NEXT_PUBLIC_WA_NUMBER=6282330449041
