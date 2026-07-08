@@ -36,7 +36,7 @@ export default function Header({ onMenuToggle }) {
   };
 
   return (
-    <header className="glass-header px-4 md:px-6 py-3.5 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 z-30 sticky top-0">
+    <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 md:px-6 py-3.5 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 z-30 sticky top-0">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuToggle}
