@@ -1,8 +1,6 @@
 // API Route: Proxy for Telegram Bot API
 // Keeps BOT_TOKEN hidden from client-side code
 
-export const maxDuration = 60;
-
 export async function POST(request) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
