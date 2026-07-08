@@ -1,0 +1,3116 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Toko - TB NS Jaya</title>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Custom CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        /* --- CSS VARIABLES (MODERN THEME) --- */
+        :root {
+            /* Lighter, cooler gray for background */
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-hover: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: rgba(0, 0, 0, 0.06);
+            /* Very subtle borders */
+
+            /* Modern Indigo/Violet Primary */
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #e0e7ff;
+
+            /* Vibrant Semantic Colors */
+            --success: #10b981;
+            --success-hover: #059669;
+            --success-bg: #d1fae5;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --danger-bg: #fee2e2;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+
+            /* Modern UI Elements */
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            /* Rounder cards */
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+            --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 20px 24px -4px rgba(0, 0, 0, 0.08);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 260px;
+        }
+
+        html.dark {
+            --bg-body: #020617;
+            /* Deep slate */
+            --bg-surface: #0f172a;
+            --bg-hover: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary-light: #312e81;
+            --success-bg: #064e3b;
+            --danger-bg: #7f1d1d;
+        }
+
+        /* --- RESET & BASE --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+
+        input,
+        select,
+        textarea {
+            font-family: inherit;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* --- LAYOUT --- */
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Floating Sidebar Concept */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition);
+            z-index: 40;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-nav {
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.2rem;
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-weight: 600;
+            transition: var(--transition);
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link i {
+            width: 26px;
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            background-color: var(--bg-hover);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .close-sidebar-btn {
+            display: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism Header */
+        .header {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 30;
+        }
+
+        html.dark .header {
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .theme-toggle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            transition: color var(--transition);
+            background: var(--bg-hover);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* --- COMPONENTS --- */
+        /* Clean Cards */
+        .card {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            letter-spacing: -0.3px;
+        }
+
+        .card-subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-top: 0.25rem;
+            letter-spacing: -1px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .responsive-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 992px) {
+            .chart-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .responsive-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Utilities */
+        .text-primary {
+            color: var(--primary);
+        }
+
+        .text-success {
+            color: var(--success);
+        }
+
+        .text-danger {
+            color: var(--danger);
+        }
+
+        .text-warning {
+            color: var(--warning);
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Tables (Minimalist) */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 1.2rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: transparent;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: var(--transition);
+        }
+
+        tbody tr:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .row-warning {
+            background-color: var(--danger-bg) !important;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-success {
+            background-color: var(--success-bg);
+            color: var(--success-hover);
+        }
+
+        .badge-danger {
+            background-color: var(--danger-bg);
+            color: var(--danger-hover);
+        }
+
+        .badge-info {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Modern Forms */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1.2rem;
+            font-size: 0.95rem;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            background-color: var(--bg-hover);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            background-color: var(--bg-surface);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid-2 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-grid-3 {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 1.2rem;
+            height: 1.2rem;
+            accent-color: var(--primary);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* Plump Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+            box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+            box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-hover);
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 50%;
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            background-color: var(--bg-hover);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-icon.delete:hover {
+            color: var(--danger);
+            background-color: var(--danger-bg);
+        }
+
+        .btn-icon.edit:hover {
+            color: var(--info);
+            background-color: var(--primary-light);
+        }
+
+        .btn-icon.stock:hover {
+            color: var(--success);
+            background-color: var(--success-bg);
+        }
+
+        /* Modals & Overlays (Smooth) */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            animation: fadeIn 0.3s ease-out;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 550px;
+            max-height: 90vh;
+            max-height: 90dvh;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            background: var(--bg-surface);
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .modal-body {
+            padding: 2rem;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            background-color: var(--bg-hover);
+            flex-shrink: 0;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        html.dark .loading-overlay {
+            background-color: rgba(15, 23, 42, 0.8);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Toasts */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: calc(100% - 48px);
+            max-width: 350px;
+        }
+
+        .toast {
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-md);
+            color: white;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 500;
+        }
+
+        .toast i {
+            font-size: 1.25rem;
+        }
+
+        .toast.success {
+            background-color: var(--success);
+        }
+
+        .toast.error {
+            background-color: var(--danger);
+        }
+
+        .toast.info {
+            background-color: var(--primary);
+        }
+
+        .toast.closing {
+            animation: fadeOutRight 0.3s ease-in forwards;
+        }
+
+        /* Toolbars */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .toolbar-search {
+            flex: 1;
+            min-width: 250px;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .toolbar-search .form-control {
+            padding-left: 2.8rem;
+            border-radius: 99px;
+        }
+
+        /* Pill search */
+        .toolbar-select {
+            width: auto;
+            border-radius: 99px;
+        }
+
+        /* Search Autocomplete */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 0.5rem;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .search-item {
+            padding: 0.8rem 1.2rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-item:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding-left: 1.5rem;
+        }
+
+        /* --- POS KASIR STYLES (Modernized) --- */
+        .tabs-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: none;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            flex-shrink: 0;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 99px;
+            background: transparent;
+            transition: var(--transition);
+            white-space: nowrap;
+            font-size: 0.95rem;
+            border: 1px solid transparent;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+        }
+
+        .pos-layout {
+            display: flex;
+            gap: 1.5rem;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .pos-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .pos-header {
+            padding: 0 0 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .pos-grid-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .pos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 1.25rem;
+            padding-bottom: 2rem;
+        }
+
+        /* Stunning POS Cards */
+        .pos-item-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pos-item-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+            border-color: transparent;
+        }
+
+        .pos-item-img-container {
+            height: 140px;
+            background-color: var(--bg-hover);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .pos-item-img-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #cbd5e1;
+        }
+
+        .pos-item-img-container img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            transition: transform 0.5s ease;
+        }
+
+        .pos-item-card:hover .pos-item-img-container img {
+            transform: scale(1.08);
+        }
+
+        /* Subtle zoom on hover */
+
+        .pos-item-details {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            background: var(--bg-surface);
+            z-index: 2;
+        }
+
+        .pos-item-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.4rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        .pos-item-price {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-top: auto;
+        }
+
+        .pos-item-stock {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(4px);
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: var(--text-main);
+            z-index: 3;
+        }
+
+        html.dark .pos-item-stock {
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        /* Cart Panel */
+        .pos-cart-panel {
+            width: 360px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: var(--shadow-md);
+        }
+
+        .pos-cart-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 800;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-hover);
+        }
+
+        .pos-cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .cart-empty-state {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .cart-empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: #e2e8f0;
+        }
+
+        html.dark .cart-empty-state i {
+            color: #334155;
+        }
+
+        .cart-item {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            background: var(--bg-body);
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .cart-item:hover {
+            background: var(--bg-surface);
+            border-color: var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .cart-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .cart-item-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            flex: 1;
+            padding-right: 1rem;
+            line-height: 1.3;
+        }
+
+        .cart-item-price {
+            color: var(--primary);
+            font-size: 1rem;
+            font-weight: 800;
+            white-space: nowrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-qty-wrapper {
+            display: flex;
+            align-items: center;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 99px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .cart-qty-btn {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            font-weight: bold;
+            background: transparent;
+            transition: var(--transition);
+        }
+
+        .cart-qty-btn:hover {
+            background: var(--bg-hover);
+            color: var(--primary);
+        }
+
+        .cart-qty-input {
+            width: 40px;
+            height: 34px;
+            text-align: center;
+            border: none;
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 0;
+            background: transparent;
+            color: var(--text-main);
+        }
+
+        .cart-qty-input:focus {
+            outline: none;
+            background: var(--primary-light);
+        }
+
+        .cart-item-delete {
+            color: var(--text-muted);
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+        }
+
+        .cart-item-delete:hover {
+            background: var(--danger);
+            color: white;
+            border-color: transparent;
+        }
+
+        .pos-cart-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-surface);
+        }
+
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .cart-total-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .cart-total-value {
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Media Queries */
+        @media (max-width: 1024px) {
+            .pos-layout {
+                flex-direction: column;
+                overflow: auto;
+            }
+
+            .pos-main {
+                min-height: 500px;
+                flex: none;
+                overflow: visible;
+            }
+
+            .pos-grid-wrapper {
+                overflow: visible;
+                padding-right: 0;
+            }
+
+            .pos-cart-panel {
+                width: 100%;
+                min-height: 400px;
+                flex: none;
+                margin-bottom: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                transform: translateX(-100%);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .menu-toggle,
+            .close-sidebar-btn {
+                display: block;
+            }
+
+            .page-title {
+                display: none;
+            }
+
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .main-content {
+                padding: 1.25rem;
+            }
+
+            .card {
+                padding: 1.25rem;
+            }
+
+            .modal-content {
+                max-height: 95dvh;
+                max-width: 100%;
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+                margin-top: auto;
+                animation: slideUp 0.3s ease-out;
+            }
+
+            .modal-header {
+                padding: 1.25rem;
+            }
+
+            .modal-body {
+                padding: 1.25rem;
+            }
+
+            .modal-footer {
+                padding: 1.25rem;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+                padding: 0.85rem;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .toolbar-search {
+                max-width: 100%;
+                min-width: 100%;
+            }
+
+            .toolbar-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .toolbar-actions>* {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .toolbar-select {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .kpi-value {
+                font-size: 1.6rem;
+            }
+
+            .form-grid-2,
+            .form-grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .toast-container {
+                top: 12px;
+                right: 50%;
+                transform: translateX(50%);
+                width: calc(100% - 24px);
+            }
+
+            @keyframes slideInRight {
+                from {
+                    transform: translate(50%, -100%);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translate(50%, 0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes fadeOutRight {
+                from {
+                    transform: translate(50%, 0);
+                    opacity: 1;
+                }
+
+                to {
+                    transform: translate(50%, -100%);
+                    opacity: 0;
+                }
+            }
+
+            .pos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-brand">TB NS Jaya</span>
+                <button id="close-sidebar-btn" class="close-sidebar-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-link active"><i class="fas fa-tachometer-alt"></i> Dasbor</a>
+                <a href="#items" class="nav-link"><i class="fas fa-box-open"></i> Manajemen Barang</a>
+                <a href="#transactions" class="nav-link"><i class="fas fa-cash-register"></i> Transaksi / POS</a>
+                <a href="#debts" class="nav-link"><i class="fas fa-file-invoice-dollar"></i> Utang Pemasok</a>
+                <a href="#kasbon" class="nav-link"><i class="fas fa-hand-holding-dollar"></i> Kasbon Pelanggan</a>
+                <a href="#customers" class="nav-link"><i class="fas fa-users"></i> Data Pelanggan</a>
+                <a href="#calculator" class="nav-link"><i class="fas fa-calculator"></i> Kalkulator</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button id="menu-btn" class="menu-toggle"><i class="fas fa-bars"></i></button>
+                    <h2 id="page-title" class="page-title">Dasbor</h2>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button id="sync-btn" class="theme-toggle" title="Tarik Data Terbaru (Sinkronisasi)"><i
+                            class="fas fa-sync-alt" id="sync-icon"></i></button>
+                    <button id="theme-toggle" class="theme-toggle" title="Ganti Tema"><i class="fas fa-sun"
+                            id="theme-icon-sun"></i><i class="fas fa-moon hidden" id="theme-icon-moon"></i></button>
+                </div>
+            </header>
+
+            <!-- Dynamic Pages -->
+            <main class="main-content">
+                <div id="dashboard-page" class="page active"></div>
+                <div id="items-page" class="page"></div>
+                <div id="transactions-page" class="page" style="padding:0; overflow:hidden;"></div>
+                <div id="debts-page" class="page"></div>
+                <div id="kasbon-page" class="page"></div>
+                <div id="customers-page" class="page"></div>
+                <div id="calculator-page" class="page"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p class="mt-4 font-bold text-primary" id="loading-text" style="margin-top: 1rem;">Memuat data...</p>
+    </div>
+
+    <!-- Modals Container -->
+    <div id="modal-container"></div>
+    <!-- Notification/Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+    <!-- Confirmation Dialog Container -->
+    <div id="confirmation-dialog-container"></div>
+
+    <script type="module">
+        const { jsPDF } = window.jspdf;
+
+        // URL GOOGLE APPS SCRIPT YANG DIBERIKAN
+        const API_URL = "https://script.google.com/macros/s/AKfycbx943rIKc-J96Xb9F3lqGVQHWuZY4RDeHYzbm1qZVaNx-6Oc4zSAaRV_Ncy5YvWzDMIzQ/exec";
+
+        // KONFIGURASI TELEGRAM BOT
+        const TELEGRAM_BOT_TOKEN = "8633780141:AAFS9XVILky7zdElyKbBIDk_RpszqKHH8rE";
+        const TELEGRAM_CHAT_ID = "820352873";
+
+        const App = {
+            state: {
+                items: [], categories: [], sales: [], purchases: [], customers: [],
+                settings: { theme: 'light' },
+                activePage: 'dashboard',
+                txTab: 'pos', // pos | buy | history
+                posCart: [],
+                posCategoryFilter: 'all',
+                posSearchQuery: ''
+            },
+
+            // Fitur Debounce untuk optimalisasi kecepatan pencarian (mencegah lag saat mengetik cepat)
+            debounce(func, wait) {
+                let timeout;
+                return function (...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            },
+
+            // Escape HTML untuk mencegah error parsing ketika ada tanda kutip di string
+            escapeHTML(str) {
+                if (!str) return '';
+                return String(str).replace(/[&<>'"]/g, match => {
+                    const escape = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+                    return escape[match];
+                });
+            },
+
+            async init() {
+                this.showLoading("Menghubungkan ke Database Cloud...");
+                await this.loadData();
+                this.hideLoading();
+                this.applyTheme();
+                this.router();
+                this.attachGlobalListeners();
+                window.addEventListener('hashchange', () => this.router());
+                this.checkRecurringStockReminder();
+            },
+
+            async loadData() {
+                try {
+                    const response = await fetch(API_URL);
+                    if (!response.ok) throw new Error("Gagal merespons dari server");
+                    const data = await response.json();
+                    if (data.items || data.categories || data.sales || data.purchases || data.customers) {
+                        this.state.items = (data.items || []).map(i => ({ ...i, unit: i.unit || 'Pcs', imageUrl: i.imageUrl || '' }));
+                        this.state.categories = data.categories || [];
+                        this.state.customers = data.customers || [];
+                        this.state.purchases = (data.purchases || []).map(p => ({ ...p, paymentHistory: p.paymentHistory || [] }));
+                        this.state.sales = (data.sales || []).map(s => ({
+                            ...s, isKasbon: s.isKasbon || false, customerDetails: s.customerDetails || null,
+                            dueDate: s.dueDate || null, isPaid: s.isPaid === undefined ? true : s.isPaid,
+                            paidAmount: s.paidAmount === undefined ? s.totalPrice : s.paidAmount, paymentHistory: s.paymentHistory || []
+                        }));
+                        if (data.settings) this.state.settings = data.settings;
+                    }
+                } catch (error) {
+                    console.error(error);
+                    this.showToast("Gagal memuat data dari cloud. Menggunakan database lokal.", "error");
+                }
+                if (this.state.categories.length === 0) {
+                    this.state.categories = [{ id: 'cat-1', name: 'Semen & Pasir' }, { id: 'cat-2', name: 'Besi & Baja' }];
+                }
+            },
+
+            async saveData() {
+                this.showToast("Menyinkronkan data ke cloud...", "info");
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(this.state)
+                    });
+                    const result = await response.json();
+                    if (result.status !== 'success') throw new Error(result.message);
+                } catch (error) {
+                    console.error(error);
+                    this.showToast("Gagal menyinkronkan data ke Cloud!", "error");
+                }
+            },
+
+            async syncData() {
+                const icon = document.getElementById('sync-icon');
+                icon.classList.add('fa-spin'); icon.style.color = 'var(--primary)';
+                this.showToast("Menarik data terbaru...", "info");
+                try {
+                    await this.loadData(); this.renderAll(); this.showToast("Sinkronisasi sukses.", "success");
+                } catch (error) {
+                    this.showToast("Gagal menarik data.", "error");
+                } finally {
+                    icon.classList.remove('fa-spin'); icon.style.color = '';
+                }
+            },
+
+            async sendTelegramNotification(message) {
+                if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.includes("MASUKKAN_TOKEN")) return;
+                const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+                try {
+                    await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' }) });
+                } catch (error) { }
+            },
+
+            async checkRecurringStockReminder() {
+                if (!this.state.items || this.state.items.length === 0) return;
+                const lowStockItems = this.state.items.map(item => ({ ...item, currentStock: this.calculateStock(item.id) })).filter(item => item.currentStock <= 10);
+                if (lowStockItems.length === 0) return;
+
+                const lastReminder = localStorage.getItem('nsJaya_lastStockReminder');
+                const now = new Date();
+                const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+
+                let shouldSend = false;
+                if (!lastReminder) { shouldSend = true; }
+                else {
+                    const lastDate = new Date(lastReminder);
+                    if (isNaN(lastDate.getTime()) || (now.getTime() - lastDate.getTime() >= threeDaysInMs)) { shouldSend = true; }
+                }
+
+                if (shouldSend) {
+                    localStorage.setItem('nsJaya_lastStockReminder', now.toISOString());
+                    let pesan = `⚠️ *PENGINGAT RUTIN STOK MENIPIS* ⚠️\n\nBerikut adalah daftar barang yang perlu segera dipesan ulang:\n\n`;
+                    lowStockItems.forEach((item, index) => { pesan += `${index + 1}. *${item.name}* (${item.code})\n   Sisa Stok: *${item.currentStock} ${item.unit}*\n`; });
+                    pesan += `\n_Pesan ini dikirim otomatis setiap 3 hari jika ada stok <= 10._`;
+                    await this.sendTelegramNotification(pesan);
+                }
+            },
+
+            router() {
+                const hash = window.location.hash.substring(1) || 'dashboard';
+                this.state.activePage = hash;
+                this.renderPage();
+                this.updateActiveNav();
+            },
+
+            renderAll() { this.renderPage(); },
+
+            renderPage() {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                const pageElement = document.getElementById(`${this.state.activePage}-page`);
+                if (pageElement) {
+                    pageElement.classList.add('active');
+                    const renderMethodName = `render${this.capitalize(this.state.activePage)}Page`;
+                    if (typeof this[renderMethodName] === 'function') {
+                        if (this.state.activePage === 'transactions') {
+                            pageElement.style.padding = '0';
+                        } else {
+                            pageElement.style.padding = '';
+                        }
+                        this[renderMethodName]();
+                    }
+                }
+                const titles = {
+                    'dashboard': 'Dasbor', 'items': 'Manajemen Barang', 'transactions': 'Transaksi / POS',
+                    'debts': 'Utang Pemasok', 'kasbon': 'Kasbon Pelanggan', 'customers': 'Data Pelanggan', 'calculator': 'Kalkulator'
+                };
+                document.getElementById('page-title').textContent = titles[this.state.activePage] || 'Aplikasi';
+            },
+
+            updateActiveNav() {
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${this.state.activePage}`) {
+                        link.classList.add('active');
+                    }
+                });
+            },
+
+            // --- PAGE RENDERERS ---
+            renderDashboardPage() {
+                const page = document.getElementById('dashboard-page');
+                const totalRevenue = this.state.sales.reduce((sum, sale) => sum + sale.totalPrice, 0);
+                const totalGrossProfit = this.state.sales.reduce((sum, sale) => {
+                    const item = this.getItemById(sale.itemId);
+                    return item ? sum + ((sale.pricePerItem - item.hpp) * sale.quantity) : sum;
+                }, 0);
+                const totalTransactions = this.state.sales.length;
+                const totalPiutang = this.state.sales.filter(s => s.isKasbon && !s.isPaid).reduce((sum, s) => sum + (s.totalPrice - s.paidAmount), 0);
+
+                const itemSalesQty = {}; const itemSalesProfit = {};
+                this.state.sales.forEach(sale => {
+                    const item = this.getItemById(sale.itemId); if (!item) return;
+                    itemSalesQty[item.name] = (itemSalesQty[item.name] || 0) + sale.quantity;
+                    itemSalesProfit[item.name] = (itemSalesProfit[item.name] || 0) + ((sale.pricePerItem - item.hpp) * sale.quantity);
+                });
+
+                const sortedItemQty = Object.entries(itemSalesQty).sort(([, a], [, b]) => b - a).slice(0, 10);
+                const sortedItemProfit = Object.entries(itemSalesProfit).sort(([, a], [, b]) => b - a).slice(0, 10);
+                const lowStockItems = this.state.items.map(item => ({ ...item, currentStock: this.calculateStock(item.id) })).filter(item => item.currentStock <= 10).sort((a, b) => a.currentStock - b.currentStock);
+
+                page.innerHTML = `
+                    <div class="kpi-grid">
+                        <div class="card"><div class="card-subtitle">Total Omzet Penjualan</div><div class="kpi-value text-primary">${this.formatCurrency(totalRevenue)}</div></div>
+                        <div class="card"><div class="card-subtitle">Total Laba Kotor</div><div class="kpi-value text-success">${this.formatCurrency(totalGrossProfit)}</div></div>
+                        <div class="card"><div class="card-subtitle">Total Piutang Kasbon</div><div class="kpi-value text-warning">${this.formatCurrency(totalPiutang)}</div></div>
+                        <div class="card"><div class="card-subtitle">Total Transaksi</div><div class="kpi-value">${totalTransactions}</div></div>
+                    </div>
+                    <div class="chart-grid">
+                        <div class="card"><div class="card-title"><i class="fas fa-chart-bar text-primary"></i> Barang Paling Laris</div><div style="height: 300px;"><canvas id="bestSellingChart"></canvas></div></div>
+                        <div class="card"><div class="card-title"><i class="fas fa-chart-line text-success"></i> Paling Menguntungkan</div><div style="height: 300px;"><canvas id="mostProfitableChart"></canvas></div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Stok Menipis (<= 10)</div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Nama Barang</th><th>Kategori</th><th class="text-right">Sisa Stok</th></tr></thead>
+                                <tbody>
+                                    ${lowStockItems.length > 0 ? lowStockItems.map(item => `
+                                        <tr><td>${this.escapeHTML(item.name)}</td><td class="text-muted">${this.escapeHTML(this.getCategoryById(item.categoryId)?.name) || '-'}</td><td class="text-right font-bold text-danger">${item.currentStock} ${this.escapeHTML(item.unit)}</td></tr>
+                                    `).join('') : `<tr><td colspan="3" class="text-center text-muted">Stok aman.</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                this.renderChart('bestSellingChart', 'bar', sortedItemQty.map(i => i[0]), sortedItemQty.map(i => i[1]), 'Kuantitas Terjual', '#4f46e5', 'y');
+                this.renderChart('mostProfitableChart', 'bar', sortedItemProfit.map(i => i[0]), sortedItemProfit.map(i => i[1]), 'Total Laba', '#10b981', 'y');
+            },
+
+            renderItemsPage() {
+                const page = document.getElementById('items-page');
+                if (!page) return;
+
+                // Render kerangka utama saja, datanya di-update via updateTable agar input tidak kehilangan fokus
+                page.innerHTML = `
+                    <div class="card mb-6">
+                        <div class="toolbar">
+                            <div class="search-wrapper toolbar-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="item-search" class="form-control search-input" placeholder="Cari nama atau kode barang..." autocomplete="off">
+                            </div>
+                            <div class="toolbar-actions">
+                                <select id="item-sort" class="form-control toolbar-select">
+                                    <option value="name-asc">Nama A-Z</option>
+                                    <option value="name-desc">Nama Z-A</option>
+                                    <option value="price-asc">Harga Terendah</option>
+                                    <option value="price-desc">Harga Tertinggi</option>
+                                    <option value="category">Kategori</option>
+                                </select>
+                                <button class="btn btn-secondary" onclick="App.openCategoryManagerModal()"><i class="fas fa-tags"></i> Kategori</button>
+                                <button class="btn btn-primary" onclick="App.openAddItemModal()"><i class="fas fa-plus"></i> Barang Baru</button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Kode</th><th>Gambar</th><th>Nama Barang</th><th>Kategori</th><th>Satuan</th><th class="text-right">Stok</th><th class="text-right">Harga Jual</th><th class="text-center">Aksi</th></tr></thead>
+                                <tbody id="items-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                const searchEl = document.getElementById('item-search');
+                const sortEl = document.getElementById('item-sort');
+                const tbody = document.getElementById('items-table-body');
+
+                const updateTable = () => {
+                    const searchTerm = searchEl.value.toLowerCase();
+                    const sortBy = sortEl.value;
+
+                    let filteredItems = this.state.items.filter(item => item.name.toLowerCase().includes(searchTerm) || item.code.toLowerCase().includes(searchTerm));
+                    filteredItems.sort((a, b) => {
+                        if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+                        if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+                        if (sortBy === 'price-asc') return a.salePrice - b.salePrice;
+                        if (sortBy === 'price-desc') return b.salePrice - a.salePrice;
+                        if (sortBy === 'category') return (this.getCategoryById(a.categoryId)?.name || '').localeCompare(this.getCategoryById(b.categoryId)?.name || '');
+                        return 0;
+                    });
+
+                    tbody.innerHTML = filteredItems.length > 0 ? filteredItems.map(item => {
+                        const safeUrl = this.escapeHTML(item.imageUrl);
+                        const safeName = this.escapeHTML(item.name);
+                        const imgHtml = safeUrl
+                            ? `<div class="pos-item-img-container" style="width:40px;height:40px;border-radius:4px;border-bottom:none;border:1px solid var(--border-color);">
+                                   <div class="pos-item-img-placeholder" style="font-size:1.2rem;"><i class="fas fa-box"></i></div>
+                                   <img src="${safeUrl}" alt="${safeName}" onerror="this.style.display='none'">
+                               </div>`
+                            : `<div style="width:40px;height:40px;background:var(--bg-hover);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--text-muted); border:1px solid var(--border-color);"><i class="fas fa-box"></i></div>`;
+
+                        return `
+                        <tr>
+                            <td class="text-muted" style="font-family: monospace;">${this.escapeHTML(item.code)}</td>
+                            <td>${imgHtml}</td>
+                            <td class="font-bold">${safeName}</td>
+                            <td class="text-muted">${this.escapeHTML(this.getCategoryById(item.categoryId)?.name) || '-'}</td>
+                            <td class="text-muted">${this.escapeHTML(item.unit)}</td>
+                            <td class="text-right font-bold">${this.calculateStock(item.id)}</td>
+                            <td class="text-right text-primary">${this.formatCurrency(item.salePrice)}</td>
+                            <td class="text-center">
+                                <button class="btn-icon edit" onclick="App.openEditItemModal('${item.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-icon stock" onclick="App.openAdjustStockModal('${item.id}')" title="Sesuaikan Stok"><i class="fas fa-warehouse"></i></button>
+                                <button class="btn-icon delete" onclick="App.handleDeleteItem('${item.id}')" title="Hapus"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `}).join('') : `<tr><td colspan="8" class="text-center text-muted py-4">Tidak ada barang ditemukan.</td></tr>`;
+                };
+
+                if (searchEl && sortEl) {
+                    searchEl.addEventListener('input', this.debounce(updateTable, 250)); // Debounce 0.25 detik
+                    sortEl.addEventListener('change', updateTable);
+                }
+                updateTable(); // Inisialisasi awal
+            },
+
+            // --- TRANSACTIONS & POS MENU ---
+            switchTxTab(tab) {
+                this.state.txTab = tab;
+                this.renderTransactionsPage();
+            },
+
+            renderTransactionsPage() {
+                const page = document.getElementById('transactions-page');
+
+                page.innerHTML = `
+                    <div style="padding: 1rem 1.5rem 0; background: var(--bg-surface); border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
+                        <div class="tabs-wrapper">
+                            <button class="tab-btn ${this.state.txTab === 'pos' ? 'active' : ''}" onclick="App.switchTxTab('pos')"><i class="fas fa-cash-register"></i> Kasir POS</button>
+                            <button class="tab-btn ${this.state.txTab === 'buy' ? 'active' : ''}" onclick="App.switchTxTab('buy')"><i class="fas fa-truck-loading"></i> Beli Stok</button>
+                            <button class="tab-btn ${this.state.txTab === 'history' ? 'active' : ''}" onclick="App.switchTxTab('history')"><i class="fas fa-history"></i> Riwayat Transaksi</button>
+                        </div>
+                    </div>
+                    <div id="tx-tab-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;"></div>
+                `;
+
+                const contentArea = document.getElementById('tx-tab-content');
+                if (!contentArea) return;
+
+                if (this.state.txTab === 'pos') {
+                    this.renderPOSTab(contentArea);
+                } else if (this.state.txTab === 'buy') {
+                    this.renderPurchaseTab(contentArea);
+                } else {
+                    this.renderHistoryTab(contentArea);
+                }
+            },
+
+            renderPOSTab(container) {
+                const catOptions = [{ id: 'all', name: 'Semua Kategori' }, ...this.state.categories].map(c =>
+                    `<option value="${c.id}" ${this.state.posCategoryFilter === c.id ? 'selected' : ''}>${this.escapeHTML(c.name)}</option>`
+                ).join('');
+
+                container.innerHTML = `
+                    <div class="pos-layout">
+                        <!-- Main Items Grid -->
+                        <div class="pos-main">
+                            <div class="pos-header">
+                                <div class="search-wrapper" style="flex: 1;">
+                                    <i class="fas fa-search search-icon"></i>
+                                    <input type="text" id="pos-search" class="form-control search-input" placeholder="Cari barang..." value="${this.escapeHTML(this.state.posSearchQuery)}">
+                                </div>
+                                <select id="pos-category" class="form-control" style="width: auto;">
+                                    ${catOptions}
+                                </select>
+                            </div>
+                            <div class="pos-grid-wrapper">
+                                <div class="pos-grid" id="pos-items-grid">
+                                    <!-- Items will be injected here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cart Sidebar -->
+                        <div class="pos-cart-panel">
+                            <div class="pos-cart-header">
+                                <span>Keranjang</span>
+                                <span class="badge badge-info" id="cart-count">0</span>
+                            </div>
+                            <div class="pos-cart-items" id="pos-cart-items"></div>
+                            <div class="pos-cart-footer">
+                                <div class="cart-total-row">
+                                    <span>Total:</span>
+                                    <span id="pos-cart-total">Rp 0</span>
+                                </div>
+                                <button class="btn btn-success w-full" id="pos-checkout-btn" style="font-size: 1.1rem; padding: 0.8rem;">
+                                    <i class="fas fa-money-bill-wave"></i> Bayar / Checkout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                this.updatePOSGrid();
+                this.updatePOSCartUI();
+
+                const searchEl = document.getElementById('pos-search');
+                // Menggunakan debounce agar tidak lag saat mengetik cepat
+                if (searchEl) searchEl.addEventListener('input', this.debounce(e => {
+                    this.state.posSearchQuery = e.target.value.toLowerCase();
+                    this.updatePOSGrid();
+                }, 250));
+
+                const catEl = document.getElementById('pos-category');
+                if (catEl) catEl.addEventListener('change', e => { this.state.posCategoryFilter = e.target.value; this.updatePOSGrid(); });
+
+                const chkBtn = document.getElementById('pos-checkout-btn');
+                if (chkBtn) chkBtn.addEventListener('click', () => {
+                    if (this.state.posCart.length === 0) return this.showToast('Keranjang masih kosong', 'error');
+                    this.openPOSCheckoutModal();
+                });
+            },
+
+            updatePOSGrid() {
+                const grid = document.getElementById('pos-items-grid');
+                if (!grid) return;
+
+                let items = this.state.items;
+                if (this.state.posCategoryFilter !== 'all') {
+                    items = items.filter(i => i.categoryId === this.state.posCategoryFilter);
+                }
+                if (this.state.posSearchQuery) {
+                    items = items.filter(i => i.name.toLowerCase().includes(this.state.posSearchQuery) || i.code.toLowerCase().includes(this.state.posSearchQuery));
+                }
+
+                if (items.length === 0) {
+                    grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--text-muted);">Barang tidak ditemukan.</div>`;
+                    return;
+                }
+
+                grid.innerHTML = items.map(item => {
+                    const stock = this.calculateStock(item.id);
+                    const safeUrl = this.escapeHTML(item.imageUrl);
+                    const safeName = this.escapeHTML(item.name);
+                    const imgHtml = safeUrl
+                        ? `<div class="pos-item-img-container">
+                               <div class="pos-item-img-placeholder"><i class="fas fa-box-open"></i></div>
+                               <img src="${safeUrl}" alt="${safeName}" onerror="this.style.display='none'">
+                           </div>`
+                        : `<div class="pos-item-img-container"><div class="pos-item-img-placeholder"><i class="fas fa-box-open"></i></div></div>`;
+
+                    return `
+                        <div class="pos-item-card" onclick="App.addToCart('${item.id}')">
+                            <div class="pos-item-stock ${stock <= 10 ? 'text-danger' : ''}">${stock}</div>
+                            ${imgHtml}
+                            <div class="pos-item-details">
+                                <div class="pos-item-title">${safeName}</div>
+                                <div class="pos-item-price">${this.formatCurrency(item.salePrice)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            updatePOSCartUI() {
+                const container = document.getElementById('pos-cart-items');
+                const countEl = document.getElementById('cart-count');
+                const totalEl = document.getElementById('pos-cart-total');
+                if (!container) return;
+
+                if (this.state.posCart.length === 0) {
+                    container.innerHTML = `
+                        <div class="cart-empty-state">
+                            <i class="fas fa-shopping-basket"></i>
+                            <p>Belum ada barang di keranjang</p>
+                        </div>
+                    `;
+                    countEl.textContent = '0';
+                    totalEl.textContent = 'Rp 0';
+                    return;
+                }
+
+                let totalQty = 0; let totalPrice = 0;
+                container.innerHTML = this.state.posCart.map((cartItem) => {
+                    const item = this.getItemById(cartItem.itemId);
+                    const lineTotal = cartItem.qty * cartItem.price;
+                    totalQty += cartItem.qty; totalPrice += lineTotal;
+
+                    return `
+                        <div class="cart-item">
+                            <div class="cart-item-header">
+                                <div class="cart-item-title">${this.escapeHTML(item.name)}</div>
+                                <i class="fas fa-times cart-item-delete" onclick="App.removeFromCart('${cartItem.itemId}')"></i>
+                            </div>
+                            <div class="cart-item-controls">
+                                <div class="cart-item-price">${this.formatCurrency(lineTotal)}</div>
+                                <div class="cart-qty-wrapper">
+                                    <div class="cart-qty-btn" onclick="App.changeCartQty('${cartItem.itemId}', -1)">-</div>
+                                    <input type="number" step="any" class="cart-qty-input" value="${cartItem.qty}" onchange="App.setCartQty('${cartItem.itemId}', this.value)">
+                                    <div class="cart-qty-btn" onclick="App.changeCartQty('${cartItem.itemId}', 1)">+</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                countEl.textContent = this.state.posCart.length;
+                totalEl.textContent = this.formatCurrency(totalPrice);
+                container.scrollTop = container.scrollHeight;
+            },
+
+            addToCart(itemId) {
+                const item = this.getItemById(itemId);
+                const stock = this.calculateStock(itemId);
+                if (stock <= 0) return this.showToast('Stok barang habis!', 'error');
+
+                const existing = this.state.posCart.find(c => c.itemId === itemId);
+                if (existing) {
+                    if (existing.qty + 1 > stock) return this.showToast('Melebihi stok tersedia.', 'error');
+                    existing.qty += 1;
+                } else {
+                    this.state.posCart.push({ itemId: itemId, qty: 1, price: item.salePrice });
+                }
+                this.updatePOSCartUI();
+            },
+
+            removeFromCart(itemId) {
+                this.state.posCart = this.state.posCart.filter(c => c.itemId !== itemId);
+                this.updatePOSCartUI();
+            },
+
+            changeCartQty(itemId, delta) {
+                const cartItem = this.state.posCart.find(c => c.itemId === itemId);
+                if (!cartItem) return;
+                const newQty = cartItem.qty + delta;
+                if (newQty <= 0) { this.removeFromCart(itemId); }
+                else {
+                    const stock = this.calculateStock(itemId);
+                    if (newQty > stock) return this.showToast('Melebihi stok tersedia.', 'error');
+                    cartItem.qty = newQty;
+                    this.updatePOSCartUI();
+                }
+            },
+
+            setCartQty(itemId, value) {
+                const qty = parseFloat(value);
+                if (isNaN(qty) || qty <= 0) return this.removeFromCart(itemId);
+                const stock = this.calculateStock(itemId);
+                if (qty > stock) {
+                    this.showToast('Melebihi stok tersedia.', 'error');
+                    this.updatePOSCartUI();
+                    return;
+                }
+                const cartItem = this.state.posCart.find(c => c.itemId === itemId);
+                if (cartItem) { cartItem.qty = qty; this.updatePOSCartUI(); }
+            },
+
+            openPOSCheckoutModal() {
+                const totalPrice = this.state.posCart.reduce((sum, c) => sum + (c.qty * c.price), 0);
+                this.openModal(`
+                    <form id="pos-checkout-form">
+                        <div class="modal-header"><h3>Checkout / Pembayaran</h3></div>
+                        <div class="modal-body">
+                            <div style="background: var(--primary-light); color: var(--primary); padding: 1.5rem; border-radius: var(--radius-md); text-align: center; margin-bottom: 1.5rem;">
+                                <div style="font-size: 1rem; margin-bottom: 0.5rem; font-weight: 500;">Total Tagihan</div>
+                                <div style="font-size: 2rem; font-weight: 700;">${this.formatCurrency(totalPrice)}</div>
+                            </div>
+
+                            <div class="form-group border-t" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                <label class="form-label" style="font-weight: 600; color: var(--primary);"><i class="fas fa-users"></i> Data Pelanggan / Member <span class="text-muted" style="font-weight: normal; font-size: 0.8rem;">(Opsional untuk Cash)</span></label>
+                                <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.75rem;">Cari berdasarkan No. HP. Jika nomor baru, otomatis disimpan sebagai member.</p>
+                                
+                                <div class="form-grid gap-2">
+                                    <div class="search-wrapper">
+                                        <input type="text" id="chk-cust-phone" class="form-control mb-2" placeholder="Ketik No. HP / WA..." autocomplete="off">
+                                        <div id="cust-search-results" class="search-results hidden"></div>
+                                        <input type="hidden" id="chk-cust-id">
+                                    </div>
+                                    <input type="text" id="chk-cust-name" class="form-control mb-2" placeholder="Nama Pelanggan">
+                                    <textarea id="chk-cust-address" class="form-control mb-2" placeholder="Alamat (Opsional)" rows="2"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-group border-t" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                <div class="checkbox-group mb-4">
+                                    <input type="checkbox" id="chk-is-kasbon">
+                                    <label for="chk-is-kasbon" style="font-weight: 600;">Catat sebagai Kasbon (Utang Pelanggan)</label>
+                                </div>
+                                <div id="chk-kasbon-fields" class="hidden form-grid gap-4 bg-bg-hover p-4 rounded-md" style="background: var(--bg-hover); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                                    <div>
+                                        <label class="form-label">Jatuh Tempo <span class="text-danger">*</span></label>
+                                        <input type="date" id="chk-due-date" class="form-control">
+                                    </div>
+                                    <div>
+                                        <label class="form-label">Dibayar di Muka (DP)</label>
+                                        <input type="number" id="chk-dp" class="form-control" value="0" min="0" max="${totalPrice}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group border-t" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="chk-send-wa" checked>
+                                    <label for="chk-send-wa" style="font-weight: 600; color: #25D366;"><i class="fab fa-whatsapp"></i> Kirim Nota ke WhatsApp Pelanggan</label>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Batal</button>
+                            <button type="submit" class="btn btn-success" style="font-size: 1.1rem; padding: 0.75rem 2rem;"><i class="fas fa-check-circle"></i> Selesaikan Transaksi</button>
+                        </div>
+                    </form>
+                `);
+
+                // Logika Pencarian Pelanggan
+                const phoneInput = document.getElementById('chk-cust-phone');
+                const nameInput = document.getElementById('chk-cust-name');
+                const addrInput = document.getElementById('chk-cust-address');
+                const custIdInput = document.getElementById('chk-cust-id');
+                const searchRes = document.getElementById('cust-search-results');
+
+                // Menggunakan debounce dan filter non-angka untuk pencarian HP yang lebih cerdas
+                phoneInput.addEventListener('input', this.debounce(e => {
+                    const term = e.target.value.toLowerCase();
+                    custIdInput.value = ''; // Reset ID
+                    if (term.length < 3) { searchRes.classList.add('hidden'); return; }
+
+                    const cleanTerm = term.replace(/\D/g, ''); // Ambil angkanya saja untuk perbandingan
+
+                    const match = this.state.customers.filter(c => {
+                        const cleanPhone = String(c.phone || '').replace(/\D/g, '');
+                        return (cleanTerm && cleanPhone.includes(cleanTerm)) || c.name.toLowerCase().includes(term);
+                    });
+
+                    if (match.length > 0) {
+                        // Batasi hasil maksimal 10 agar pencarian ringan
+                        searchRes.innerHTML = match.slice(0, 10).map(c => `<div class="search-item" data-id="${c.id}"><strong>${this.escapeHTML(c.phone)}</strong> - ${this.escapeHTML(c.name)}</div>`).join('');
+                        searchRes.classList.remove('hidden');
+                    } else {
+                        searchRes.classList.add('hidden');
+                    }
+                }, 300));
+
+                searchRes.addEventListener('click', e => {
+                    const itemEl = e.target.closest('.search-item');
+                    if (itemEl && itemEl.dataset.id) {
+                        const cust = this.state.customers.find(c => c.id === itemEl.dataset.id);
+                        if (cust) {
+                            custIdInput.value = cust.id;
+                            phoneInput.value = cust.phone;
+                            nameInput.value = cust.name;
+                            addrInput.value = cust.address || '';
+                        }
+                        searchRes.classList.add('hidden');
+                    }
+                });
+
+                document.addEventListener('click', e => {
+                    if (phoneInput && searchRes && !phoneInput.contains(e.target) && !searchRes.contains(e.target)) searchRes.classList.add('hidden');
+                });
+
+                const kasbonCheck = document.getElementById('chk-is-kasbon');
+                const kasbonFields = document.getElementById('chk-kasbon-fields');
+                kasbonCheck.addEventListener('change', e => { kasbonFields.classList.toggle('hidden', !e.target.checked); });
+
+                document.getElementById('pos-checkout-form').addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const phone = phoneInput.value.trim();
+                    const name = nameInput.value.trim();
+                    const isKasbon = kasbonCheck.checked;
+                    const sendWa = document.getElementById('chk-send-wa').checked;
+                    let dueDate = null; let dpAmount = 0;
+
+                    if (isKasbon) {
+                        dueDate = document.getElementById('chk-due-date').value;
+                        dpAmount = parseFloat(document.getElementById('chk-dp').value) || 0;
+                        if (!name || !phone || !dueDate) return this.showToast('Nama, No. HP, & Jatuh Tempo wajib untuk Kasbon!', 'error');
+                    }
+                    if (sendWa && !phone) return this.showToast('No. HP wajib diisi untuk mengirim nota WA!', 'error');
+
+                    let currentCustomer = null;
+                    if (name && phone) {
+                        let existingId = custIdInput.value;
+                        const cleanPhoneInput = phone.replace(/\D/g, ''); // Hapus spasi/strip
+
+                        // Mencegah duplikasi data: Jika nomor HP sama (walau format beda), gabungkan ke member yang ada
+                        if (!existingId && cleanPhoneInput) {
+                            const found = this.state.customers.find(c => String(c.phone || '').replace(/\D/g, '') === cleanPhoneInput);
+                            if (found) existingId = found.id;
+                        }
+
+                        if (existingId) {
+                            currentCustomer = this.state.customers.find(c => c.id === existingId);
+                            if (currentCustomer) {
+                                currentCustomer.name = name;
+                                currentCustomer.phone = phone; // Simpan format nomor terbaru
+                                currentCustomer.address = addrInput.value;
+                                currentCustomer.totalTransactions = (currentCustomer.totalTransactions || 0) + 1;
+                            }
+                        } else {
+                            currentCustomer = { id: `cust-${Date.now()}`, name: name, phone: phone, address: addrInput.value, totalTransactions: 1, joinDate: new Date().toISOString() };
+                            this.state.customers.push(currentCustomer);
+                        }
+                    }
+
+                    const dateIso = new Date().toISOString();
+                    const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+                    let lowStockAlerts = [];
+
+                    this.state.posCart.forEach((cartItem, idx) => {
+                        const lineTotal = cartItem.qty * cartItem.price;
+                        let paidLine = 0;
+                        if (!isKasbon) { paidLine = lineTotal; }
+                        else {
+                            if (dpAmount > 0) {
+                                if (dpAmount >= lineTotal) { paidLine = lineTotal; dpAmount -= lineTotal; }
+                                else { paidLine = dpAmount; dpAmount = 0; }
+                            }
+                        }
+
+                        const sale = {
+                            id: `${invoiceNumber}-${idx}`, itemId: cartItem.itemId, quantity: cartItem.qty, pricePerItem: cartItem.price,
+                            totalPrice: lineTotal, date: dateIso, isKasbon: isKasbon, isPaid: paidLine >= lineTotal, paidAmount: paidLine,
+                            paymentHistory: paidLine > 0 && isKasbon ? [{ date: dateIso, amount: paidLine }] : [],
+                            customerDetails: currentCustomer ? { name: currentCustomer.name, phone: currentCustomer.phone, address: currentCustomer.address } : null,
+                            dueDate: dueDate
+                        };
+
+                        const oldStock = this.calculateStock(cartItem.itemId);
+                        this.state.sales.push(sale);
+                        const newStock = oldStock - cartItem.qty;
+                        if (newStock <= 10 && oldStock > 10) {
+                            const itemDef = this.getItemById(cartItem.itemId);
+                            lowStockAlerts.push(`- *${itemDef.name}* (Sisa: ${newStock} ${itemDef.unit})`);
+                        }
+                    });
+
+                    let notaText = "";
+                    if (sendWa && currentCustomer) {
+                        notaText = this.generateReceiptText(invoiceNumber, this.state.posCart, totalPrice, isKasbon, parseFloat(document.getElementById('chk-dp').value) || 0, currentCustomer);
+                    }
+
+                    this.state.posCart = []; this.saveData(); this.closeModal(); this.renderAll(); this.showToast('Transaksi Berhasil!', 'success');
+
+                    if (lowStockAlerts.length > 0) {
+                        const pesan = `⚠️ *Peringatan Stok Menipis (Kasir)!*\n\nBarang berikut menyentuh batas minimum:\n${lowStockAlerts.join('\n')}\n\n_Segera cek keadaan fisik barang._`;
+                        this.sendTelegramNotification(pesan);
+                    }
+
+                    if (sendWa && currentCustomer && notaText) {
+                        const waPhone = this.formatWAPhone(currentCustomer.phone);
+                        const waUrl = `https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(notaText)}`;
+                        window.open(waUrl, '_blank');
+                    }
+                });
+            },
+
+            formatWAPhone(phone) {
+                let cleaned = ('' + phone).replace(/\D/g, '');
+                if (cleaned.startsWith('0')) cleaned = '62' + cleaned.substring(1);
+                return cleaned;
+            },
+
+            generateReceiptText(invoiceNo, cart, total, isKasbon, dp, customer) {
+                let txt = `*TB NS JAYA*\n`;
+                txt += `Nota: ${invoiceNo}\n`;
+                txt += `Tanggal: ${new Date().toLocaleString('id-ID')}\n`;
+                if (customer) txt += `Pelanggan: ${customer.name}\n`;
+                txt += `--------------------------------\n`;
+                cart.forEach(c => {
+                    const item = this.getItemById(c.itemId);
+                    txt += `${c.qty} ${item.unit} x ${item.name}\n@ ${this.formatCurrency(c.price)} = ${this.formatCurrency(c.qty * c.price)}\n`;
+                });
+                txt += `--------------------------------\n`;
+                txt += `*Total Tagihan: ${this.formatCurrency(total)}*\n`;
+                if (isKasbon) {
+                    txt += `Status: KASBON / UTANG\nDP: ${this.formatCurrency(dp)}\nSisa Tagihan: *${this.formatCurrency(total - dp)}*\n`;
+                } else {
+                    txt += `Status: LUNAS (Cash)\n`;
+                }
+                txt += `--------------------------------\n`;
+                txt += `Terima kasih telah berbelanja di TB NS Jaya!\n_Semoga material yang dibeli membawa berkah._`;
+                return txt;
+            },
+
+            renderPurchaseTab(container) {
+                container.innerHTML = `
+                    <div style="padding: 1.5rem; overflow-y: auto;">
+                        <div class="card" style="max-width: 800px; margin: 0 auto;">
+                            <div class="card-title"><i class="fas fa-truck-loading text-primary"></i> Catat Pembelian Stok Baru</div>
+                            <form id="purchase-form">
+                                <div class="form-group search-wrapper">
+                                    <label class="form-label">Cari Barang</label>
+                                    <i class="fas fa-search search-icon" style="top: 38px;"></i>
+                                    <input type="text" id="purchase-item-search" class="form-control search-input" placeholder="Ketik nama/kode..." autocomplete="off">
+                                    <div id="purchase-search-results" class="search-results hidden"></div>
+                                    <input type="hidden" id="purchase-item-id">
+                                </div>
+                                <div class="form-grid form-grid-2">
+                                    <div class="form-group">
+                                        <label id="purchase-quantity-label" class="form-label">Kuantitas</label>
+                                        <input type="number" step="any" id="purchase-quantity" class="form-control" min="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Pemasok</label>
+                                        <input type="text" id="purchase-supplier" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Total Biaya Pembelian Keseluruhan</label>
+                                    <input type="number" id="purchase-total-cost" class="form-control" min="0" required>
+                                </div>
+                                <div class="form-group border-t" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                    <div class="checkbox-group mb-4">
+                                        <input type="checkbox" id="purchase-is-debt">
+                                        <label for="purchase-is-debt" style="font-weight: 600;">Bayar Nanti (Utang ke Pemasok)</label>
+                                    </div>
+                                    <div id="purchase-debt-fields" class="hidden">
+                                        <label class="form-label">Jatuh Tempo</label>
+                                        <input type="date" id="purchase-due-date" class="form-control mb-2">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-full" style="font-size:1.1rem; padding: 0.8rem;">Catat Pembelian</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+
+                const input = document.getElementById('purchase-item-search');
+                const res = document.getElementById('purchase-search-results');
+                const hiddenId = document.getElementById('purchase-item-id');
+
+                input.addEventListener('input', this.debounce(e => {
+                    const term = e.target.value.toLowerCase();
+                    if (term.length < 1) { res.classList.add('hidden'); return; }
+                    const match = this.state.items.filter(i => i.name.toLowerCase().includes(term) || i.code.toLowerCase().includes(term));
+                    // Batasi hasil maksimal 20 agar rendering super cepat
+                    res.innerHTML = match.slice(0, 20).map(i => `<div class="search-item" data-id="${i.id}">${this.escapeHTML(i.name)} (${this.escapeHTML(i.code)})</div>`).join('');
+                    res.classList.remove('hidden');
+                }, 250));
+
+                res.addEventListener('click', e => {
+                    const itemEl = e.target.closest('.search-item');
+                    if (itemEl && itemEl.dataset.id) {
+                        const item = this.getItemById(itemEl.dataset.id);
+                        hiddenId.value = item.id;
+                        input.value = `${item.name} (${item.code})`;
+                        document.getElementById('purchase-quantity-label').textContent = `Kuantitas (${item.unit})`;
+                        res.classList.add('hidden');
+                    }
+                });
+                document.addEventListener('click', e => { if (input && res && !input.contains(e.target) && !res.contains(e.target)) res.classList.add('hidden'); });
+
+                const debtCheck = document.getElementById('purchase-is-debt');
+                const debtFields = document.getElementById('purchase-debt-fields');
+                debtCheck.addEventListener('change', e => debtFields.classList.toggle('hidden', !e.target.checked));
+
+                document.getElementById('purchase-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    const itemId = hiddenId.value;
+                    const qty = parseFloat(document.getElementById('purchase-quantity').value);
+                    const supplier = document.getElementById('purchase-supplier').value;
+                    const cost = parseFloat(document.getElementById('purchase-total-cost').value);
+                    const isDebt = debtCheck.checked;
+                    const dueDate = document.getElementById('purchase-due-date').value;
+
+                    if (!itemId || !qty || !supplier || !cost || (isDebt && !dueDate)) return this.showToast('Data tidak lengkap.', 'error');
+
+                    this.state.purchases.push({
+                        id: `pur-${Date.now()}`, type: 'supplier', itemId, quantity: qty, supplier, totalCost: cost,
+                        isDebt, dueDate: isDebt ? dueDate : null, isPaid: !isDebt, paidAmount: isDebt ? 0 : cost,
+                        paymentHistory: [], date: new Date().toISOString()
+                    });
+                    this.saveData(); document.getElementById('purchase-form').reset();
+                    document.getElementById('purchase-quantity-label').textContent = 'Kuantitas';
+                    debtFields.classList.add('hidden'); this.showToast('Pembelian dicatat.');
+                });
+            },
+
+            renderHistoryTab(container) {
+                const salesHistory = this.state.sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+                const purchaseHistory = this.state.purchases.filter(p => p.type === 'supplier').sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                container.innerHTML = `
+                    <div style="padding: 1.5rem; overflow-y: auto;">
+                        <div class="card mb-6">
+                            <div class="toolbar">
+                                <div class="card-title" style="margin:0;"><i class="fas fa-shopping-basket"></i> Riwayat Penjualan</div>
+                                <div class="toolbar-actions">
+                                    <button onclick="App.downloadSalesAsPDF()" class="btn btn-secondary" style="color:var(--danger)"><i class="fas fa-file-pdf"></i> PDF</button>
+                                    <button onclick="App.downloadSalesAsExcel()" class="btn btn-secondary" style="color:var(--success)"><i class="fas fa-file-excel"></i> Excel</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Tanggal</th><th>Barang</th><th>Pelanggan</th><th class="text-right">Total</th><th class="text-center">Status</th><th class="text-center">Aksi</th></tr></thead>
+                                    <tbody>
+                                        ${salesHistory.length > 0 ? salesHistory.map(s => {
+                    const item = this.getItemById(s.itemId);
+                    const statusHtml = s.isKasbon ? (s.isPaid ? '<span class="badge badge-success">Lunas</span>' : '<span class="badge badge-danger">Kasbon</span>') : '<span class="badge badge-info">Cash</span>';
+                    return `<tr>
+                                                <td>${new Date(s.date).toLocaleString('id-ID')}</td>
+                                                <td>${this.escapeHTML(item?.name)} (${s.quantity} ${this.escapeHTML(item?.unit)})</td>
+                                                <td>${s.isKasbon ? this.escapeHTML(s.customerDetails?.name) : 'Cash'}</td>
+                                                <td class="text-right font-bold">${this.formatCurrency(s.totalPrice)}</td>
+                                                <td class="text-center">${statusHtml}</td>
+                                                <td class="text-center"><button class="btn-icon delete" onclick="App.deleteSaleRecord('${s.id}')"><i class="fas fa-trash"></i></button></td>
+                                            </tr>`}).join('') : `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada penjualan.</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="toolbar">
+                                <div class="card-title" style="margin:0;"><i class="fas fa-truck"></i> Riwayat Pembelian Stok</div>
+                                <div class="toolbar-actions">
+                                    <button onclick="App.downloadPurchasesAsPDF()" class="btn btn-secondary" style="color:var(--danger)"><i class="fas fa-file-pdf"></i> PDF</button>
+                                    <button onclick="App.downloadPurchasesAsExcel()" class="btn btn-secondary" style="color:var(--success)"><i class="fas fa-file-excel"></i> Excel</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Tanggal</th><th>Barang</th><th>Pemasok</th><th class="text-right">Kuantitas</th><th class="text-right">Total Biaya</th><th class="text-center">Status</th><th class="text-center">Aksi</th></tr></thead>
+                                    <tbody>
+                                        ${purchaseHistory.length > 0 ? purchaseHistory.map(p => {
+                        const item = this.getItemById(p.itemId);
+                        const debt = this.getDebtByPurchaseId(p.id);
+                        const statusHtml = debt ? (debt.isPaid ? '<span class="badge badge-success">Lunas</span>' : '<span class="badge badge-danger">Belum Lunas</span>') : '<span class="badge badge-success">Lunas</span>';
+                        return `<tr>
+                                                <td>${new Date(p.date).toLocaleDateString('id-ID')}</td>
+                                                <td>${this.escapeHTML(item?.name)}</td><td>${this.escapeHTML(p.supplier)}</td>
+                                                <td class="text-right">${p.quantity} ${this.escapeHTML(item?.unit)}</td>
+                                                <td class="text-right font-bold">${this.formatCurrency(p.totalCost)}</td>
+                                                <td class="text-center">${statusHtml}</td>
+                                                <td class="text-center"><button class="btn-icon delete" onclick="App.deletePurchaseRecord('${p.id}')"><i class="fas fa-trash"></i></button></td>
+                                            </tr>`}).join('') : `<tr><td colspan="7" class="text-center text-muted py-4">Belum ada pembelian.</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            deleteSaleRecord(id) {
+                this.showConfirm('Hapus penjualan ini? Stok akan kembali.', () => {
+                    this.state.sales = this.state.sales.filter(s => s.id !== id);
+                    this.saveData(); this.renderAll(); this.showToast('Dihapus.');
+                });
+            },
+
+            deletePurchaseRecord(id) {
+                this.showConfirm('Hapus pembelian ini? Stok akan berkurang.', () => {
+                    this.state.purchases = this.state.purchases.filter(p => p.id !== id);
+                    this.saveData(); this.renderAll(); this.showToast('Dihapus.');
+                });
+            },
+
+            // --- DEBTS & KASBON ---
+            renderDebtsPage(sortBy = 'due-date-asc') {
+                const page = document.getElementById('debts-page');
+                let unpaidDebts = this.state.purchases.filter(p => p.isDebt && !p.isPaid).map(p => ({ ...p, remaining: p.totalCost - (p.paidAmount || 0) }));
+
+                const now = new Date(); now.setHours(0, 0, 0, 0);
+                const in7Days = new Date(now); in7Days.setDate(in7Days.getDate() + 7);
+
+                const totalDebt = unpaidDebts.reduce((sum, d) => sum + d.remaining, 0);
+                const due7Days = unpaidDebts.filter(d => d.dueDate && new Date(d.dueDate) <= in7Days).reduce((sum, d) => sum + d.remaining, 0);
+
+                unpaidDebts.sort((a, b) => {
+                    if (sortBy === 'due-date-asc') return new Date(a.dueDate) - new Date(b.dueDate);
+                    if (sortBy === 'amount-desc') return b.remaining - a.remaining;
+                    return new Date(b.date) - new Date(a.date);
+                });
+
+                page.innerHTML = `
+                    <div class="kpi-grid">
+                        <div class="card"><div class="card-subtitle">Total Utang ke Pemasok</div><div class="kpi-value text-danger">${this.formatCurrency(totalDebt)}</div></div>
+                        <div class="card"><div class="card-subtitle">Jatuh Tempo <= 7 Hari</div><div class="kpi-value text-warning">${this.formatCurrency(due7Days)}</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="toolbar" style="justify-content: flex-end;">
+                            <select id="debt-sort" class="form-control toolbar-select">
+                                <option value="due-date-asc" ${sortBy === 'due-date-asc' ? 'selected' : ''}>Jatuh Tempo Terdekat</option>
+                                <option value="amount-desc" ${sortBy === 'amount-desc' ? 'selected' : ''}>Tagihan Terbesar</option>
+                                <option value="date-desc" ${sortBy === 'date-desc' ? 'selected' : ''}>Transaksi Terbaru</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Jatuh Tempo</th><th>Pemasok</th><th>Barang</th><th class="text-right">Sisa Tagihan</th><th class="text-center">Aksi</th></tr></thead>
+                                <tbody>
+                                    ${unpaidDebts.length > 0 ? unpaidDebts.map(d => {
+                    const item = this.getItemById(d.itemId);
+                    const isOverdue = d.dueDate && new Date(d.dueDate) < now;
+                    return `<tr class="${isOverdue ? 'row-warning' : ''}">
+                                            <td class="font-bold ${isOverdue ? 'text-danger' : ''}">${d.dueDate ? new Date(d.dueDate).toLocaleDateString('id-ID') : '-'}</td>
+                                            <td>${this.escapeHTML(d.supplier)}</td><td class="text-muted">${this.escapeHTML(item?.name)}</td>
+                                            <td class="text-right font-bold text-danger">${this.formatCurrency(d.remaining)}</td>
+                                            <td class="text-center"><button class="btn btn-success pay-debt-btn" onclick="App.openPayDebtModal('${d.id}')">Bayar</button></td>
+                                        </tr>`}).join('') : `<tr><td colspan="5" class="text-center text-muted py-8">Tidak ada utang yang belum lunas.</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                const sortEl = document.getElementById('debt-sort');
+                if (sortEl) sortEl.addEventListener('change', e => this.renderDebtsPage(e.target.value));
+            },
+
+            renderKasbonPage(sortBy = 'due-date-asc') {
+                const page = document.getElementById('kasbon-page');
+                let unpaidKasbons = this.state.sales.filter(s => s.isKasbon && !s.isPaid).map(s => ({ ...s, remaining: s.totalPrice - s.paidAmount }));
+
+                const now = new Date(); now.setHours(0, 0, 0, 0);
+                const in7Days = new Date(now); in7Days.setDate(in7Days.getDate() + 7);
+
+                const totalKasbon = unpaidKasbons.reduce((sum, k) => sum + k.remaining, 0);
+                const due7Days = unpaidKasbons.filter(k => k.dueDate && new Date(k.dueDate) <= in7Days).reduce((sum, k) => sum + k.remaining, 0);
+
+                unpaidKasbons.sort((a, b) => {
+                    if (sortBy === 'due-date-asc') return new Date(a.dueDate) - new Date(b.dueDate);
+                    if (sortBy === 'amount-desc') return b.remaining - a.remaining;
+                    return new Date(b.date) - new Date(a.date);
+                });
+
+                page.innerHTML = `
+                    <div class="kpi-grid">
+                        <div class="card"><div class="card-subtitle">Total Piutang Pelanggan</div><div class="kpi-value text-warning">${this.formatCurrency(totalKasbon)}</div></div>
+                        <div class="card"><div class="card-subtitle">Jatuh Tempo <= 7 Hari</div><div class="kpi-value text-danger">${this.formatCurrency(due7Days)}</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="toolbar" style="justify-content: flex-end;">
+                            <select id="kasbon-sort" class="form-control toolbar-select">
+                                <option value="due-date-asc" ${sortBy === 'due-date-asc' ? 'selected' : ''}>Jatuh Tempo Terdekat</option>
+                                <option value="amount-desc" ${sortBy === 'amount-desc' ? 'selected' : ''}>Tagihan Terbesar</option>
+                                <option value="date-desc" ${sortBy === 'date-desc' ? 'selected' : ''}>Transaksi Terbaru</option>
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Jatuh Tempo</th><th>Pelanggan</th><th>Detail Barang</th><th class="text-right">Sisa Tagihan</th><th class="text-center">Aksi</th></tr></thead>
+                                <tbody>
+                                    ${unpaidKasbons.length > 0 ? unpaidKasbons.map(k => {
+                    const item = this.getItemById(k.itemId);
+                    const isOverdue = k.dueDate && new Date(k.dueDate) < now;
+                    return `<tr class="${isOverdue ? 'row-warning' : ''}">
+                                            <td class="font-bold ${isOverdue ? 'text-danger' : ''}">${k.dueDate ? new Date(k.dueDate).toLocaleDateString('id-ID') : '-'}</td>
+                                            <td><div class="font-bold">${this.escapeHTML(k.customerDetails?.name)}</div><div class="text-muted text-sm">${this.escapeHTML(k.customerDetails?.phone)}</div></td>
+                                            <td class="text-muted">${this.escapeHTML(item?.name)} (${k.quantity} ${this.escapeHTML(item?.unit)})</td>
+                                            <td class="text-right font-bold text-warning">${this.formatCurrency(k.remaining)}</td>
+                                            <td class="text-center"><button class="btn btn-success pay-kasbon-btn" onclick="App.openPayKasbonModal('${k.id}')">Bayar</button></td>
+                                        </tr>`}).join('') : `<tr><td colspan="5" class="text-center text-muted py-8">Tidak ada kasbon pelanggan.</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                const sortEl = document.getElementById('kasbon-sort');
+                if (sortEl) sortEl.addEventListener('change', e => this.renderKasbonPage(e.target.value));
+            },
+
+            // --- CUSTOMERS MENU ---
+            renderCustomersPage() {
+                const page = document.getElementById('customers-page');
+
+                page.innerHTML = `
+                    <div class="kpi-grid">
+                        <div class="card">
+                            <div class="card-subtitle">Total Pelanggan Aktif</div>
+                            <div class="kpi-value text-primary" id="kpi-cust-total">${this.state.customers.length}</div>
+                        </div>
+                    </div>
+                    <div class="card mb-6">
+                        <div class="toolbar">
+                            <div class="search-wrapper toolbar-search">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="cust-search" class="form-control search-input" placeholder="Cari nama atau No. HP..." autocomplete="off">
+                            </div>
+                            <div class="toolbar-actions">
+                                <select id="cust-sort" class="form-control toolbar-select">
+                                    <option value="name-asc">Nama A-Z</option>
+                                    <option value="name-desc">Nama Z-A</option>
+                                    <option value="tx-desc">Transaksi Terbanyak</option>
+                                    <option value="date-desc">Terbaru Bergabung</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Nama Pelanggan</th><th>No. HP / WA</th><th>Alamat</th><th class="text-right">Total Transaksi</th><th>Tgl Bergabung</th><th class="text-center">Aksi</th></tr></thead>
+                                <tbody id="cust-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                const searchEl = document.getElementById('cust-search');
+                const sortEl = document.getElementById('cust-sort');
+                const tbody = document.getElementById('cust-table-body');
+
+                const updateTable = () => {
+                    const searchTerm = searchEl.value.toLowerCase();
+                    const sortBy = sortEl.value;
+
+                    let filtered = this.state.customers.filter(c => {
+                        const cleanPhone = String(c.phone || '').replace(/\D/g, '');
+                        const cleanTerm = searchTerm.replace(/\D/g, '');
+                        return c.name.toLowerCase().includes(searchTerm) || (cleanTerm && cleanPhone.includes(cleanTerm)) || String(c.phone || '').includes(searchTerm);
+                    });
+
+                    filtered.sort((a, b) => {
+                        if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+                        if (sortBy === 'name-desc') return b.name.localeCompare(a.name);
+                        if (sortBy === 'tx-desc') return (b.totalTransactions || 0) - (a.totalTransactions || 0);
+                        if (sortBy === 'date-desc') return new Date(b.joinDate) - new Date(a.joinDate);
+                        return 0;
+                    });
+
+                    document.getElementById('kpi-cust-total').textContent = this.state.customers.length;
+
+                    tbody.innerHTML = filtered.length > 0 ? filtered.map(c => `
+                        <tr>
+                            <td class="font-bold">${this.escapeHTML(c.name)}</td>
+                            <td>${this.escapeHTML(c.phone)}</td>
+                            <td class="text-muted">${this.escapeHTML(c.address) || '-'}</td>
+                            <td class="text-right font-bold text-primary">${c.totalTransactions || 0}</td>
+                            <td class="text-muted">${new Date(c.joinDate).toLocaleDateString('id-ID')}</td>
+                            <td class="text-center"><button class="btn-icon edit" onclick="App.openEditCustomerModal('${c.id}')"><i class="fas fa-edit"></i></button></td>
+                        </tr>
+                    `).join('') : `<tr><td colspan="6" class="text-center text-muted py-4">Tidak ada data pelanggan.</td></tr>`;
+                };
+
+                if (searchEl && sortEl) {
+                    searchEl.addEventListener('input', this.debounce(updateTable, 250));
+                    sortEl.addEventListener('change', updateTable);
+                }
+                updateTable(); // Inisialisasi awal
+            },
+
+            openEditCustomerModal(id) {
+                const cust = this.state.customers.find(c => c.id === id); if (!cust) return;
+                this.openModal(`
+                    <form id="edit-cust-form">
+                        <div class="modal-header"><h3>Edit Data Pelanggan</h3></div>
+                        <div class="modal-body form-grid gap-4">
+                            <div><label class="form-label">Nama Pelanggan</label><input type="text" id="ec-name" class="form-control" value="${this.escapeHTML(cust.name)}" required></div>
+                            <div><label class="form-label">No. HP / WA</label><input type="text" id="ec-phone" class="form-control" value="${this.escapeHTML(cust.phone)}" required></div>
+                            <div><label class="form-label">Alamat</label><textarea id="ec-address" class="form-control" rows="2">${this.escapeHTML(cust.address || '')}</textarea></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Batal</button>
+                            <button type="submit" class="btn btn-primary">Update Pelanggan</button>
+                        </div>
+                    </form>
+                `);
+                document.getElementById('edit-cust-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    cust.name = document.getElementById('ec-name').value;
+                    cust.phone = document.getElementById('ec-phone').value;
+                    cust.address = document.getElementById('ec-address').value;
+                    this.saveData(); this.closeModal(); this.renderCustomersPage(); this.showToast('Data pelanggan diperbarui.');
+                });
+            },
+
+            renderCalculatorPage() {
+                const page = document.getElementById('calculator-page');
+                page.innerHTML = `
+                    <div class="responsive-grid">
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-calculator text-primary"></i> Kalkulator Harga Jual</div>
+                            <div class="form-group mt-4">
+                                <label class="form-label">Harga Pokok (HPP)</label>
+                                <input type="number" id="calc-hpp" class="form-control" placeholder="Contoh: 50000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Margin Keuntungan (%)</label>
+                                <input type="number" id="calc-margin" class="form-control" placeholder="Contoh: 20">
+                            </div>
+                            <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                                <div class="text-muted mb-2">Harga Jual Ideal:</div>
+                                <div class="kpi-value text-primary" id="calc-result">Rp 0</div>
+                                <div class="text-success font-bold mt-2" id="calc-profit-info">Laba: Rp 0</div>
+                            </div>
+                        </div>
+                        <div class="card" style="background-color: var(--primary-light); border: none;">
+                            <div class="card-title" style="color: var(--primary);"><i class="fas fa-info-circle"></i> Info: Margin vs Markup</div>
+                            <p class="mb-4" style="color: var(--text-main);"><strong>Margin</strong> dihitung dari harga jual. Menunjukkan berapa persen dari pendapatan yang menjadi laba.</p>
+                            <div class="form-control mb-4" style="background: rgba(255,255,255,0.5); font-family: monospace; font-size:0.85rem;">Harga Jual = HPP / (1 - (Margin / 100))</div>
+                            <p class="mb-4" style="color: var(--text-main);"><strong>Markup</strong> ditambahkan pada HPP. Menunjukkan persentase penambahan biaya.</p>
+                            <div class="form-control" style="background: rgba(255,255,255,0.5); font-family: monospace; font-size:0.85rem;">Harga Jual = HPP * (1 + (Markup / 100))</div>
+                        </div>
+                    </div>
+                `;
+                const calc = () => {
+                    const hpp = parseFloat(document.getElementById('calc-hpp').value) || 0;
+                    const margin = parseFloat(document.getElementById('calc-margin').value) || 0;
+                    const res = document.getElementById('calc-result');
+                    const prof = document.getElementById('calc-profit-info');
+                    if (hpp > 0 && margin > 0 && margin < 100) {
+                        const sale = hpp / (1 - (margin / 100));
+                        res.textContent = this.formatCurrency(sale);
+                        prof.textContent = `Laba: ${this.formatCurrency(sale - hpp)}`;
+                    } else { res.textContent = 'Rp 0'; prof.textContent = 'Laba: Rp 0'; }
+                };
+                const calcHpp = document.getElementById('calc-hpp');
+                const calcMargin = document.getElementById('calc-margin');
+                if (calcHpp) calcHpp.addEventListener('input', calc);
+                if (calcMargin) calcMargin.addEventListener('input', calc);
+            },
+
+            // --- MODALS & HELPERS ---
+            openModal(html) {
+                const container = document.getElementById('modal-container');
+                container.innerHTML = `<div class="modal-overlay" id="modal-bg"><div class="modal-content">${html}</div></div>`;
+                document.getElementById('modal-bg').addEventListener('click', e => { if (e.target.id === 'modal-bg') this.closeModal(); });
+            },
+            closeModal() { document.getElementById('modal-container').innerHTML = ''; },
+
+            openAddItemModal() {
+                const cats = this.state.categories.map(c => `<option value="${c.id}">${this.escapeHTML(c.name)}</option>`).join('');
+                this.openModal(`
+                    <form id="add-form">
+                        <div class="modal-header"><h3>Barang Baru</h3></div>
+                        <div class="modal-body">
+                            <div class="form-grid form-grid-2 mb-4">
+                                <div><label class="form-label">Kode</label><input type="text" id="m-code" class="form-control" value="BRG-${Date.now().toString().slice(-5)}" readonly></div>
+                                <div><label class="form-label">Nama</label><input type="text" id="m-name" class="form-control" required></div>
+                            </div>
+                            <div class="form-grid form-grid-2 mb-4">
+                                <div><label class="form-label">Kategori</label><select id="m-cat" class="form-control">${cats}</select></div>
+                                <div><label class="form-label">Satuan</label><input type="text" id="m-unit" class="form-control" placeholder="Pcs, Kg, dll" required></div>
+                            </div>
+                            <div class="form-grid form-grid-3 mb-4">
+                                <div><label class="form-label">Harga Awal/Dasar</label><input type="number" id="m-hpp" class="form-control" required></div>
+                                <div><label class="form-label">Harga Jual</label><input type="number" id="m-sell" class="form-control" required></div>
+                                <div><label class="form-label">Laba (Otomatis)</label><input type="text" id="m-profit" class="form-control" readonly style="background-color: var(--bg-hover); font-weight: bold; color: var(--success);"></div>
+                            </div>
+                            <div class="form-grid form-grid-2">
+                                <div class="form-group"><label class="form-label">Stok Awal</label><input type="number" step="any" id="m-stock" class="form-control" value="0" required></div>
+                                <div class="form-group"><label class="form-label">Link Gambar (Opsional)</label><input type="url" id="m-image" class="form-control" placeholder="https://..."></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Batal</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        </div>
+                    </form>
+                `);
+
+                const calcProfit = () => {
+                    const hpp = parseFloat(document.getElementById('m-hpp').value) || 0;
+                    const sell = parseFloat(document.getElementById('m-sell').value) || 0;
+                    document.getElementById('m-profit').value = this.formatCurrency(sell - hpp);
+                };
+                document.getElementById('m-hpp').addEventListener('input', calcProfit);
+                document.getElementById('m-sell').addEventListener('input', calcProfit);
+                calcProfit();
+
+                document.getElementById('add-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    this.state.items.push({
+                        id: `item-${Date.now()}`, code: document.getElementById('m-code').value, name: document.getElementById('m-name').value,
+                        categoryId: document.getElementById('m-cat').value, unit: document.getElementById('m-unit').value,
+                        hpp: parseFloat(document.getElementById('m-hpp').value), salePrice: parseFloat(document.getElementById('m-sell').value),
+                        initialStock: parseFloat(document.getElementById('m-stock').value), imageUrl: document.getElementById('m-image').value
+                    });
+                    this.saveData(); this.closeModal(); this.renderItemsPage(); this.showToast('Tersimpan.');
+                });
+            },
+
+            openEditItemModal(id) {
+                const item = this.getItemById(id); if (!item) return;
+                const cats = this.state.categories.map(c => `<option value="${c.id}" ${item.categoryId === c.id ? 'selected' : ''}>${this.escapeHTML(c.name)}</option>`).join('');
+                this.openModal(`
+                    <form id="edit-form">
+                        <div class="modal-header"><h3>Edit Barang</h3></div>
+                        <div class="modal-body">
+                            <div class="form-grid form-grid-2 mb-4">
+                                <div><label class="form-label">Kode</label><input type="text" class="form-control" value="${this.escapeHTML(item.code)}" disabled></div>
+                                <div><label class="form-label">Nama</label><input type="text" id="e-name" class="form-control" value="${this.escapeHTML(item.name)}" required></div>
+                            </div>
+                            <div class="form-grid form-grid-2 mb-4">
+                                <div><label class="form-label">Kategori</label><select id="e-cat" class="form-control">${cats}</select></div>
+                                <div><label class="form-label">Satuan</label><input type="text" id="e-unit" class="form-control" value="${this.escapeHTML(item.unit)}" required></div>
+                            </div>
+                            <div class="form-grid form-grid-3 mb-4">
+                                <div><label class="form-label">Harga Awal/Dasar</label><input type="number" id="e-hpp" class="form-control" value="${item.hpp}" required></div>
+                                <div><label class="form-label">Harga Jual</label><input type="number" id="e-sell" class="form-control" value="${item.salePrice}" required></div>
+                                <div><label class="form-label">Laba (Otomatis)</label><input type="text" id="e-profit" class="form-control" readonly style="background-color: var(--bg-hover); font-weight: bold; color: var(--success);"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Link Gambar (Opsional)</label><input type="url" id="e-image" class="form-control" value="${this.escapeHTML(item.imageUrl || '')}" placeholder="https://...">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Batal</button>
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                `);
+
+                const calcProfit = () => {
+                    const hpp = parseFloat(document.getElementById('e-hpp').value) || 0;
+                    const sell = parseFloat(document.getElementById('e-sell').value) || 0;
+                    document.getElementById('e-profit').value = this.formatCurrency(sell - hpp);
+                };
+                document.getElementById('e-hpp').addEventListener('input', calcProfit);
+                document.getElementById('e-sell').addEventListener('input', calcProfit);
+                calcProfit();
+
+                document.getElementById('edit-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    Object.assign(item, {
+                        name: document.getElementById('e-name').value, categoryId: document.getElementById('e-cat').value,
+                        unit: document.getElementById('e-unit').value, hpp: parseFloat(document.getElementById('e-hpp').value),
+                        salePrice: parseFloat(document.getElementById('e-sell').value), imageUrl: document.getElementById('e-image').value
+                    });
+                    this.saveData(); this.closeModal(); this.renderItemsPage(); this.showToast('Diperbarui.');
+                });
+            },
+
+            openAdjustStockModal(id) {
+                const item = this.getItemById(id); if (!item) return;
+                this.openModal(`
+                    <form id="adj-form">
+                        <div class="modal-header"><h3>Sesuaikan Stok</h3></div>
+                        <div class="modal-body">
+                            <p class="mb-4">Stok Saat Ini: <strong>${this.calculateStock(id)} ${this.escapeHTML(item.unit)}</strong></p>
+                            <div class="form-group">
+                                <label class="form-label">Penyesuaian (Gunakan - untuk kurang)</label>
+                                <input type="number" step="any" id="adj-val" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="App.closeModal()">Batal</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        </div>
+                    </form>
+                `);
+                document.getElementById('adj-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    const adjustment = parseFloat(document.getElementById('adj-val').value);
+                    const oldStock = this.calculateStock(id);
+                    item.initialStock += adjustment;
+
+                    const newStock = this.calculateStock(id);
+                    if (newStock <= 10 && oldStock > 10) {
+                        const pesan = `⚠️ *Peringatan Stok Menipis (Hasil Penyesuaian)!*\n\nBarang: *${item.name}* (${item.code})\nSisa Stok: *${newStock} ${item.unit}*\n\n_Segera cek keadaan fisik barang._`;
+                        this.sendTelegramNotification(pesan);
+                    }
+                    this.saveData(); this.closeModal(); this.renderAll(); this.showToast('Stok disesuaikan.');
+                });
+            },
+
+            openCategoryManagerModal() {
+                this.openModal(`
+                    <div class="modal-header"><h3>Manajemen Kategori</h3></div>
+                    <div class="modal-body">
+                        <form id="cat-add-form" style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; align-items: flex-end;">
+                            <div style="flex: 1; min-width: 200px;"><label class="form-label">Kategori Baru</label><input type="text" id="c-name" class="form-control" placeholder="Nama Kategori Baru" required></div>
+                            <button type="submit" class="btn btn-primary" style="height: 42px; flex-grow: 1;">Tambah</button>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="w-full text-sm">
+                                <thead><tr><th>Nama Kategori</th><th class="text-center" style="width: 100px;">Aksi</th></tr></thead>
+                                <tbody id="cat-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="App.closeModal()">Tutup</button></div>
+                `);
+                this.renderCategoryTable();
+
+                document.getElementById('cat-add-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    const name = document.getElementById('c-name').value.trim();
+                    if (!name) return;
+                    this.state.categories.push({ id: `cat-${Date.now()}`, name });
+                    this.saveData(); document.getElementById('c-name').value = '';
+                    this.renderCategoryTable();
+                    if (this.state.activePage === 'items') this.renderItemsPage();
+                    this.showToast('Kategori ditambah.');
+                });
+            },
+
+            renderCategoryTable() {
+                const tbody = document.getElementById('cat-table-body');
+                if (!tbody) return;
+                tbody.innerHTML = this.state.categories.map(c => `
+                    <tr>
+                        <td class="font-bold">${this.escapeHTML(c.name)}</td>
+                        <td class="text-center" style="display: flex; justify-content: center; gap: 0.5rem;">
+                            <button type="button" class="btn-icon edit" onclick="App.editCategory('${c.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button type="button" class="btn-icon delete" onclick="App.deleteCategory('${c.id}')" title="Hapus"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('') || `<tr><td colspan="2" class="text-center text-muted">Belum ada kategori.</td></tr>`;
+            },
+
+            editCategory(id) {
+                const cat = this.state.categories.find(c => c.id === id); if (!cat) return;
+                const newName = prompt("Masukkan nama kategori baru:", cat.name);
+                if (newName && newName.trim() !== "") {
+                    cat.name = newName.trim();
+                    this.saveData(); this.renderCategoryTable();
+                    if (this.state.activePage === 'items') this.renderItemsPage();
+                    this.showToast('Kategori diperbarui.');
+                }
+            },
+
+            deleteCategory(id) {
+                if (this.state.items.some(i => i.categoryId === id)) return this.showToast('Kategori sedang digunakan oleh barang, tidak dapat dihapus.', 'error');
+                this.showConfirm("Hapus kategori ini secara permanen?", () => {
+                    this.state.categories = this.state.categories.filter(c => c.id !== id);
+                    this.saveData(); this.renderCategoryTable();
+                    if (this.state.activePage === 'items') this.renderItemsPage();
+                    this.showToast('Kategori dihapus.');
+                });
+            },
+
+            openPayDebtModal(id) {
+                const d = this.state.purchases.find(p => p.id === id); if (!d) return;
+                const rem = d.totalCost - d.paidAmount;
+                const hist = d.paymentHistory.map(h => `<tr><td>${new Date(h.date).toLocaleDateString()}</td><td class="text-right">${this.formatCurrency(h.amount)}</td></tr>`).join('');
+                this.openModal(`
+                    <div class="modal-header"><h3>Bayar Utang</h3></div>
+                    <div class="modal-body">
+                        <div class="form-grid form-grid-2 mb-4">
+                            <div><div class="text-muted text-sm">Pemasok</div><div class="font-bold">${this.escapeHTML(d.supplier)}</div></div>
+                            <div class="text-right"><div class="text-muted text-sm">Sisa Tagihan</div><div class="font-bold text-danger text-lg">${this.formatCurrency(rem)}</div></div>
+                        </div>
+                        ${hist ? `<table class="mb-4 text-sm w-full"><thead><tr><th>Riwayat Bayar</th><th class="text-right">Jumlah</th></tr></thead><tbody>${hist}</tbody></table>` : ''}
+                        <form id="pay-form">
+                            <label class="form-label">Bayar Berapa?</label>
+                            <input type="number" id="p-amount" class="form-control mb-4" max="${rem}" required>
+                            <div class="text-right"><button type="submit" class="btn btn-success">Catat Pembayaran</button></div>
+                        </form>
+                    </div>
+                `);
+                document.getElementById('pay-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    const amt = parseFloat(document.getElementById('p-amount').value);
+                    if (amt > rem) return;
+                    d.paidAmount += amt; d.paymentHistory.push({ date: new Date().toISOString(), amount: amt });
+                    if (d.paidAmount >= d.totalCost) d.isPaid = true;
+                    this.saveData(); this.closeModal(); this.renderAll(); this.showToast('Pembayaran dicatat.');
+                });
+            },
+
+            openPayKasbonModal(id) {
+                const k = this.state.sales.find(s => s.id === id); if (!k) return;
+                const rem = k.totalPrice - k.paidAmount;
+                const hist = k.paymentHistory.map(h => `<tr><td>${new Date(h.date).toLocaleDateString()}</td><td class="text-right">${this.formatCurrency(h.amount)}</td></tr>`).join('');
+                this.openModal(`
+                    <div class="modal-header"><h3>Terima Pembayaran Kasbon</h3></div>
+                    <div class="modal-body">
+                        <div class="form-grid form-grid-2 mb-4">
+                            <div><div class="text-muted text-sm">Pelanggan</div><div class="font-bold">${this.escapeHTML(k.customerDetails.name)}</div></div>
+                            <div class="text-right"><div class="text-muted text-sm">Sisa Tagihan</div><div class="font-bold text-warning text-lg">${this.formatCurrency(rem)}</div></div>
+                        </div>
+                        ${hist ? `<table class="mb-4 text-sm w-full"><thead><tr><th>Riwayat Bayar</th><th class="text-right">Jumlah</th></tr></thead><tbody>${hist}</tbody></table>` : ''}
+                        <form id="pay-k-form">
+                            <label class="form-label">Jumlah Diterima</label>
+                            <input type="number" id="k-amount" class="form-control mb-4" max="${rem}" required>
+                            <div class="text-right"><button type="submit" class="btn btn-success">Catat Penerimaan</button></div>
+                        </form>
+                    </div>
+                `);
+                document.getElementById('pay-k-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    const amt = parseFloat(document.getElementById('k-amount').value);
+                    k.paidAmount += amt; k.paymentHistory.push({ date: new Date().toISOString(), amount: amt });
+                    if (k.paidAmount >= k.totalPrice) k.isPaid = true;
+                    this.saveData(); this.closeModal(); this.renderAll(); this.showToast('Kasbon dibayar.');
+                });
+            },
+
+            // --- UTILITIES ---
+            showLoading(text) { document.getElementById('loading-text').textContent = text; document.getElementById('loading-overlay').classList.remove('hidden'); },
+            hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); },
+
+            showConfirm(msg, onConfirm) {
+                const c = document.getElementById('confirmation-dialog-container');
+                c.innerHTML = `
+                    <div class="modal-overlay" id="conf-bg">
+                        <div class="modal-content" style="max-width:400px;">
+                            <div class="modal-header"><h3>Konfirmasi</h3></div>
+                            <div class="modal-body">${msg}</div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" onclick="document.getElementById('confirmation-dialog-container').innerHTML=''">Batal</button>
+                                <button class="btn btn-danger" id="conf-yes">Ya, Lanjutkan</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('conf-yes').onclick = () => { onConfirm(); c.innerHTML = ''; };
+            },
+
+            showToast(msg, type = 'success') {
+                const div = document.createElement('div');
+                div.className = `toast ${type}`;
+                div.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> <span>${msg}</span>`;
+                const container = document.getElementById('toast-container');
+                if (container) container.appendChild(div);
+                setTimeout(() => { div.classList.add('closing'); div.addEventListener('animationend', () => div.remove()); }, 3000);
+            },
+
+            capitalize: s => s.charAt(0).toUpperCase() + s.slice(1),
+            formatCurrency: a => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(a),
+            getItemById: function (id) { return this.state.items.find(i => i.id === id); },
+            getCategoryById: function (id) { return this.state.categories.find(c => c.id === id); },
+            getDebtByPurchaseId: function (id) { return this.state.purchases.find(p => p.id === id && p.isDebt); },
+            calculateStock: function (id) {
+                const item = this.getItemById(id); if (!item) return 0;
+                const buy = this.state.purchases.filter(p => p.itemId === id).reduce((s, p) => s + p.quantity, 0);
+                const sell = this.state.sales.filter(s => s.itemId === id).reduce((s, s1) => s + s1.quantity, 0);
+                return item.initialStock + buy - sell;
+            },
+
+            // --- CHARTS & THEMES ---
+            renderChart(id, type, lbls, dat, lbl, col, axis = 'x') {
+                const ctx = document.getElementById(id); if (!ctx) return;
+                const ex = Chart.getChart(id); if (ex) ex.destroy();
+                const isDark = this.state.settings.theme === 'dark';
+                const gridColor = isDark ? '#334155' : '#e5e7eb';
+                const textColor = isDark ? '#94a3b8' : '#6b7280';
+                new Chart(ctx, {
+                    type, data: { labels: lbls, datasets: [{ label: lbl, data: dat, backgroundColor: col, borderRadius: 4 }] },
+                    options: {
+                        indexAxis: axis, responsive: true, maintainAspectRatio: false,
+                        scales: { y: { grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            },
+
+            toggleTheme() {
+                this.state.settings.theme = this.state.settings.theme === 'light' ? 'dark' : 'light';
+                this.applyTheme(); this.saveData(); this.renderAll();
+            },
+
+            applyTheme() {
+                const isDark = this.state.settings.theme === 'dark';
+                document.documentElement.classList.toggle('dark', isDark);
+                document.getElementById('theme-icon-sun').classList.toggle('hidden', isDark);
+                document.getElementById('theme-icon-moon').classList.toggle('hidden', !isDark);
+            },
+
+            attachGlobalListeners() {
+                document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
+                document.getElementById('sync-btn').addEventListener('click', () => this.syncData());
+
+                const sidebar = document.getElementById('sidebar');
+                document.getElementById('menu-btn').addEventListener('click', () => sidebar.classList.add('open'));
+                document.getElementById('close-sidebar-btn').addEventListener('click', () => sidebar.classList.remove('open'));
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', () => sidebar.classList.remove('open'));
+                });
+            },
+
+            // --- DATA EXPORTS ---
+            downloadSalesAsPDF() {
+                const doc = new jsPDF(); doc.text("Riwayat Penjualan", 14, 16);
+                const rows = this.state.sales.map(s => {
+                    const i = this.getItemById(s.itemId);
+                    return [new Date(s.date).toLocaleString('id-ID'), i?.name || '-', `${s.quantity} ${i?.unit || ''}`, this.formatCurrency(s.totalPrice)];
+                });
+                doc.autoTable(["Tanggal", "Barang", "Kuantitas", "Total"], rows, { startY: 20 });
+                doc.save(`Penjualan-${Date.now()}.pdf`); this.showToast('PDF Diunduh');
+            },
+            downloadSalesAsExcel() {
+                const ws = XLSX.utils.json_to_sheet(this.state.sales.map(s => {
+                    const i = this.getItemById(s.itemId);
+                    return { Tanggal: new Date(s.date).toLocaleString(), Barang: i?.name || '-', Qty: s.quantity, Satuan: i?.unit || '', Total: s.totalPrice, Tipe: s.isKasbon ? 'Kasbon' : 'Cash' };
+                }));
+                const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Penjualan");
+                XLSX.writeFile(wb, `Penjualan-${Date.now()}.xlsx`); this.showToast('Excel Diunduh');
+            },
+            downloadPurchasesAsPDF() {
+                const doc = new jsPDF(); doc.text("Riwayat Pembelian", 14, 16);
+                const rows = this.state.purchases.filter(p => p.type === 'supplier').map(p => {
+                    const i = this.getItemById(p.itemId);
+                    return [new Date(p.date).toLocaleDateString('id-ID'), i?.name || '-', p.supplier, `${p.quantity} ${i?.unit || ''}`, this.formatCurrency(p.totalCost)];
+                });
+                doc.autoTable(["Tanggal", "Barang", "Pemasok", "Kuantitas", "Total Biaya"], rows, { startY: 20 });
+                doc.save(`Pembelian-${Date.now()}.pdf`); this.showToast('PDF Diunduh');
+            },
+            downloadPurchasesAsExcel() {
+                const ws = XLSX.utils.json_to_sheet(this.state.purchases.filter(p => p.type === 'supplier').map(p => {
+                    const i = this.getItemById(p.itemId);
+                    return { Tanggal: new Date(p.date).toLocaleDateString(), Barang: i?.name || '-', Pemasok: p.supplier, Qty: p.quantity, TotalBiaya: p.totalCost, Status: p.isPaid ? 'Lunas' : 'Utang' };
+                }));
+                const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Pembelian");
+                XLSX.writeFile(wb, `Pembelian-${Date.now()}.xlsx`); this.showToast('Excel Diunduh');
+            }
+        };
+
+        window.App = App;
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+
+</html>
