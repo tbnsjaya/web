@@ -37,7 +37,7 @@ jobs:
         # Jika menggunakan custom domain atau subpath, action ini akan membantu mendeteksinya secara otomatis
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build and Export
         env:
