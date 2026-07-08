@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   output: "export",
 
   // Base path sesuai nama repo GitHub (ubah sesuai repo name)
-  // basePath: "/tbnsjaya",
+  basePath: "/web",
 
   // Trailing slash agar GitHub Pages tidak redirect
   trailingSlash: true,
