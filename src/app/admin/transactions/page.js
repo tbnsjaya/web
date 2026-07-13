@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import useStore from '@/lib/store';
 import { formatCurrency, calculateStock, formatWAPhone, generateReceiptText } from '@/lib/utils';
 import { Search, ShoppingBasket, Minus, Plus, X, Trash2, CreditCard, Truck, History, FileDown, Loader2 } from 'lucide-react';
@@ -195,6 +195,13 @@ function CheckoutModal({ onClose }) {
   const [showSettings, setShowSettings] = useState(false);
   const { settings, updateSettings } = useStore();
   const [isUploadingQris, setIsUploadingQris] = useState(false);
+  const [localBankDetails, setLocalBankDetails] = useState('');
+
+  useEffect(() => {
+    if (settings?.bankDetails) {
+      setLocalBankDetails(settings.bankDetails);
+    }
+  }, [settings?.bankDetails]);
 
   const handlePhoneSearch = (term) => {
     setCustPhone(term);
@@ -393,15 +400,15 @@ function CheckoutModal({ onClose }) {
                 <label className="text-sm font-semibold block mb-1">Detail Rekening Bank</label>
                 <p className="text-xs text-slate-400 mb-2">Format: Nama Bank - No. Rekening - Atas Nama</p>
                 <textarea 
-                  value={settings?.bankDetails || ''} 
-                  onChange={e => updateSettings({ bankDetails: e.target.value })} 
+                  value={localBankDetails} 
+                  onChange={e => setLocalBankDetails(e.target.value)} 
                   className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 border border-transparent outline-none transition-all resize-none" 
                   rows={3}
                   placeholder="Contoh:&#10;BCA 1234567890 a.n Toko TB NS Jaya"
                 />
               </div>
             </div>
-            <button type="button" onClick={() => setShowSettings(false)} className="mt-5 w-full py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 transition-all btn-press">Simpan & Tutup</button>
+            <button type="button" onClick={() => { updateSettings({ bankDetails: localBankDetails }); setShowSettings(false); }} className="mt-5 w-full py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 transition-all btn-press">Simpan & Tutup</button>
           </div>
         </div>
       )}

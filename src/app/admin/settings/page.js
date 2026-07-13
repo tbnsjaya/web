@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useStore from '@/lib/store';
 import { uploadImageToDrive } from '@/lib/api';
 import { Settings, Save, QrCode, CreditCard, Loader2 } from 'lucide-react';
@@ -8,16 +8,16 @@ import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useStore();
-  const [bankDetails, setBankDetails] = useState(settings?.bankDetails || '');
+  const [bankDetails, setBankDetails] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync state with settings when loaded
-  useState(() => {
+  useEffect(() => {
     if (settings?.bankDetails) {
       setBankDetails(settings.bankDetails);
     }
-  });
+  }, [settings?.bankDetails]);
 
   const handleQrisUpload = async (e) => {
     const file = e.target.files[0];
