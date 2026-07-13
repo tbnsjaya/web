@@ -17,11 +17,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 relative overflow-hidden transition-colors duration-500">
       
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 dark:bg-blue-600/20 blur-[100px] animate-pulse-glow"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-500/10 dark:bg-indigo-600/20 blur-[120px] animate-pulse-glow" style={{ animationDelay: '1s' }}></div>
-      </div>
+      {/* Background is now clean to prevent lag */}
 
       <div className="w-full max-w-md p-8 z-10">
         <div className="glass-header rounded-2xl shadow-2xl p-8 sm:p-10 border border-slate-200/50 dark:border-slate-800/50 relative overflow-hidden animate-slide-up">
