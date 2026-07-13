@@ -38,3 +38,17 @@ export async function sendTelegram(message) {
     console.error('Telegram notification failed:', error);
   }
 }
+
+/**
+ * Upload image to Google Drive via proxy
+ */
+export async function uploadImageToDrive(base64Data, fileName, mimeType) {
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'uploadImage', base64Data, fileName, mimeType }),
+  });
+  const result = await response.json();
+  if (result.status !== 'success') throw new Error(result.message || 'Gagal upload ke Drive');
+  return result.url;
+}

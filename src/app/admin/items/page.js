@@ -3,7 +3,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import useStore from '@/lib/store';
 import { formatCurrency, calculateStock } from '@/lib/utils';
-import { Search, Plus, Tags, Edit2, Warehouse, Trash2, Package, X } from 'lucide-react';
+import { uploadImageToDrive } from '@/lib/api';
+import { Search, Plus, Tags, Edit2, Warehouse, Trash2, Package, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ItemsPage() {
@@ -13,6 +14,7 @@ export default function ItemsPage() {
   const [modal, setModal] = useState(null); // null | 'add' | 'edit' | 'adjust' | 'categories'
   const [editingItem, setEditingItem] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleImageUpload = useCallback((e) => {
     const file = e.target.files[0];
@@ -38,9 +40,23 @@ export default function ItemsPage() {
     return list;
   }, [items, search, sortBy, categories]);
 
-  const handleAddItem = useCallback((e) => {
+  const handleAddItem = useCallback(async (e) => {
     e.preventDefault();
     const form = e.target;
+    
+    let uploadedUrl = '';
+    if (imagePreview) {
+      setIsUploading(true);
+      try {
+        uploadedUrl = await uploadImageToDrive(imagePreview, form.name.value, 'image/png');
+      } catch (err) {
+        toast.error('Gagal upload gambar ke Google Drive');
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
     addItem({
       id: `item-${Date.now()}`,
       code: form.code.value,
@@ -50,23 +66,37 @@ export default function ItemsPage() {
       hpp: parseFloat(form.hpp.value),
       salePrice: parseFloat(form.salePrice.value),
       initialStock: parseFloat(form.initialStock.value),
-      imageUrl: imagePreview,
+      imageUrl: uploadedUrl,
     });
     setModal(null);
     setImagePreview('');
     toast.success('Barang berhasil disimpan.');
   }, [addItem, imagePreview]);
 
-  const handleEditItem = useCallback((e) => {
+  const handleEditItem = useCallback(async (e) => {
     e.preventDefault();
     const form = e.target;
+    
+    let uploadedUrl = editingItem.imageUrl;
+    if (imagePreview) {
+      setIsUploading(true);
+      try {
+        uploadedUrl = await uploadImageToDrive(imagePreview, form.name.value, 'image/png');
+      } catch (err) {
+        toast.error('Gagal upload gambar ke Google Drive');
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
     updateItem(editingItem.id, {
       name: form.name.value,
       categoryId: form.category.value,
       unit: form.unit.value,
       hpp: parseFloat(form.hpp.value),
       salePrice: parseFloat(form.salePrice.value),
-      imageUrl: imagePreview || editingItem.imageUrl,
+      imageUrl: uploadedUrl,
     });
     setModal(null);
     setEditingItem(null);
@@ -213,8 +243,10 @@ export default function ItemsPage() {
                   </div>
                 </div>
                 <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-                  <button type="button" onClick={() => setModal(null)} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-300 transition-colors">Batal</button>
-                  <button type="submit" className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 shadow-lg shadow-indigo-500/25 transition-all btn-press">Simpan</button>
+                  <button type="button" onClick={() => setModal(null)} disabled={isUploading} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-300 transition-colors disabled:opacity-50">Batal</button>
+                  <button type="submit" disabled={isUploading} className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 shadow-lg shadow-indigo-500/25 transition-all btn-press disabled:opacity-50 flex items-center gap-2">
+                    {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengupload...</> : 'Simpan'}
+                  </button>
                 </div>
               </form>
             )}
@@ -242,8 +274,10 @@ export default function ItemsPage() {
                   <div><label className="text-sm font-semibold mb-1 block">Ganti Gambar</label><input type="file" accept="image/*" onChange={handleImageUpload} className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500" />{(imagePreview || editingItem.imageUrl) && <img src={imagePreview || editingItem.imageUrl} alt="Preview" className="h-10 mt-2 rounded object-cover" />}</div>
                 </div>
                 <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
-                  <button type="button" onClick={() => { setModal(null); setEditingItem(null); }} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-300 transition-colors">Batal</button>
-                  <button type="submit" className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 shadow-lg shadow-indigo-500/25 transition-all btn-press">Update</button>
+                  <button type="button" onClick={() => { setModal(null); setEditingItem(null); }} disabled={isUploading} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-300 transition-colors disabled:opacity-50">Batal</button>
+                  <button type="submit" disabled={isUploading} className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 shadow-lg shadow-indigo-500/25 transition-all btn-press disabled:opacity-50 flex items-center gap-2">
+                    {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengupload...</> : 'Update'}
+                  </button>
                 </div>
               </form>
             )}
