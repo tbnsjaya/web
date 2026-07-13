@@ -26,15 +26,18 @@ export function escapeHTML(str) {
  * Calculate current stock for an item based on initial stock + purchases - sales
  */
 export function calculateStock(itemId, items, purchases, sales) {
-  const item = items.find((i) => i.id === itemId);
+  const item = (items || []).find((i) => i.id === itemId);
   if (!item) return 0;
-  const bought = purchases.filter((p) => p.itemId === itemId).reduce((s, p) => s + p.quantity, 0);
+  const bought = (purchases || [])
+    .filter((p) => p && p.itemId === itemId)
+    .reduce((s, p) => s + (p.quantity || 0), 0);
   let sold = 0;
-  sales.forEach((s) => {
+  (sales || []).forEach((s) => {
+    if (!s) return;
     if (s.itemId === itemId) {
       sold += s.quantity || 0;
     } else if (Array.isArray(s.items)) {
-      const match = s.items.find((si) => si.itemId === itemId);
+      const match = s.items.find((si) => si && si.itemId === itemId);
       if (match) sold += match.quantity || 0;
     }
   });

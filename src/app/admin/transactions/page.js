@@ -246,15 +246,20 @@ function CheckoutModal({ onClose }) {
       };
     }
 
-    const { invoiceNumber, totalPrice: total } = await checkout({ customer, isKasbon, dueDate, dpAmount, sendWa, paymentMethod });
+    try {
+      const { invoiceNumber, totalPrice: total } = await checkout({ customer, isKasbon, dueDate, dpAmount, sendWa, paymentMethod });
 
-    toast.success('Transaksi Berhasil!');
-    onClose();
+      toast.success('Transaksi Berhasil!');
+      onClose();
 
-    if (sendWa && customer) {
-      const notaText = generateReceiptText(invoiceNumber, posCart, items, total, isKasbon, dpAmount, customer);
-      const waPhone = formatWAPhone(customer.phone);
-      window.open(`https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(notaText)}`, '_blank');
+      if (sendWa && customer) {
+        const notaText = generateReceiptText(invoiceNumber, posCart, items, total, isKasbon, dpAmount, customer);
+        const waPhone = formatWAPhone(customer.phone);
+        window.open(`https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(notaText)}`, '_blank');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error(`Gagal memproses transaksi: ${error.message || error}`);
     }
   };
 
