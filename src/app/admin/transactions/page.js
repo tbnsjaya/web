@@ -3,7 +3,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import useStore from '@/lib/store';
 import { formatCurrency, calculateStock, formatWAPhone, generateReceiptText } from '@/lib/utils';
-import { Search, ShoppingBasket, Minus, Plus, X, Trash2, CreditCard, Truck, History, FileDown } from 'lucide-react';
+import { Search, ShoppingBasket, Minus, Plus, X, Trash2, CreditCard, Truck, History, FileDown, Loader2 } from 'lucide-react';
+import { uploadImageToDrive } from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function TransactionsPage() {
@@ -193,6 +194,7 @@ function CheckoutModal({ onClose }) {
   const [paymentMethod, setPaymentMethod] = useState('tunai');
   const [showSettings, setShowSettings] = useState(false);
   const { settings, updateSettings } = useStore();
+  const [isUploadingQris, setIsUploadingQris] = useState(false);
 
   const handlePhoneSearch = (term) => {
     setCustPhone(term);
@@ -351,15 +353,41 @@ function CheckoutModal({ onClose }) {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-semibold block mb-1">Upload QRIS Toko</label>
-                <input type="file" accept="image/*" onChange={(e) => {
+                <input type="file" accept="image/*" disabled={isUploadingQris} onChange={(e) => {
                   const file = e.target.files[0];
                   if (file) {
+                    setIsUploadingQris(true);
                     const r = new FileReader();
-                    r.onload = () => updateSettings({ qrisImage: r.result });
+                    r.onload = () => {
+                      const img = new Image();
+                      img.onload = async () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width;
+                        let h = img.height;
+                        const max = 600;
+                        if (w > h && w > max) { h *= max / w; w = max; }
+                        else if (h > max) { w *= max / h; h = max; }
+                        canvas.width = w;
+                        canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+                        try {
+                          const url = await uploadImageToDrive(base64, 'qris.jpg', 'image/jpeg');
+                          updateSettings({ qrisImage: url });
+                          toast.success('QRIS berhasil diunggah!');
+                        } catch(err) {
+                          toast.error('Gagal mengunggah QRIS');
+                        } finally {
+                          setIsUploadingQris(false);
+                        }
+                      };
+                      img.src = r.result;
+                    };
                     r.readAsDataURL(file);
                   }
-                }} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
-                {settings?.qrisImage && <img src={settings.qrisImage} className="h-24 mt-3 object-contain rounded-lg border border-slate-200 dark:border-slate-700 p-1" alt="QRIS" />}
+                }} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer disabled:opacity-50" />
+                {isUploadingQris && <p className="text-xs text-indigo-500 mt-2 flex items-center gap-1"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Mengunggah...</p>}
+                {!isUploadingQris && settings?.qrisImage && <img src={settings.qrisImage} className="h-24 mt-3 object-contain rounded-lg border border-slate-200 dark:border-slate-700 p-1" alt="QRIS" />}
               </div>
               <div>
                 <label className="text-sm font-semibold block mb-1">Detail Rekening Bank</label>
@@ -506,7 +534,17 @@ function HistoryTab() {
                     <td className="py-3 px-4 text-sm">{s.isKasbon ? s.customerDetails?.name : 'Cash'}</td>
                     <td className="py-3 px-4 text-sm text-right font-bold">{formatCurrency(s.totalPrice)}</td>
                     <td className="py-3 px-4 text-center">
-                      {s.isKasbon ? (s.isPaid ? <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold">Lunas</span> : <span className="px-2.5 py-1 bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-full text-xs font-bold">Kasbon</span>) : <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-bold">Cash</span>}
+                      {s.isKasbon ? (
+                        s.isPaid ? <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold">Lunas</span> : <span className="px-2.5 py-1 bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-full text-xs font-bold">Kasbon</span>
+                      ) : (
+                        s.paymentMethod === 'qris' ? (
+                          <span className="px-2.5 py-1 bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold">QRIS</span>
+                        ) : s.paymentMethod === 'transfer' ? (
+                          <span className="px-2.5 py-1 bg-cyan-100 dark:bg-cyan-950 text-cyan-600 dark:text-cyan-400 rounded-full text-xs font-bold">Transfer</span>
+                        ) : (
+                          <span className="px-2.5 py-1 bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-bold">Tunai</span>
+                        )
+                      )}
                     </td>
                     <td className="py-3 px-4 text-center"><button onClick={() => { if (confirm('Hapus penjualan ini?')) { deleteSale(s.id); toast.success('Dihapus.'); } }} className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all"><Trash2 className="w-4 h-4" /></button></td>
                   </tr>

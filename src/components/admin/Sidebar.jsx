@@ -11,7 +11,10 @@ import {
   Users,
   Calculator,
   X,
+  Settings,
+  LogOut,
 } from 'lucide-react';
+import { logoutAction } from '@/app/actions/auth';
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dasbor', icon: LayoutDashboard },
@@ -21,6 +24,7 @@ const navItems = [
   { href: '/admin/kasbon', label: 'Kasbon Pelanggan', icon: HandCoins },
   { href: '/admin/customers', label: 'Data Pelanggan', icon: Users },
   { href: '/admin/calculator', label: 'Kalkulator', icon: Calculator },
+  { href: '/admin/settings', label: 'Pengaturan Toko', icon: Settings },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -88,9 +92,14 @@ export default function Sidebar({ isOpen, onClose }) {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="px-4 py-3 border-t border-slate-200/60 dark:border-slate-800">
-          <p className="text-xs text-slate-400 text-center">© 2024 TB NS Jaya</p>
+        {/* Footer & Logout */}
+        <div className="px-4 py-3 border-t border-slate-200/60 dark:border-slate-800 space-y-2 flex-shrink-0">
+          <form action={logoutAction}>
+            <button type="submit" className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold text-[0.9rem] text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all">
+              <LogOut className="w-5 h-5" /> Logout
+            </button>
+          </form>
+          <p className="text-[0.65rem] text-slate-400 text-center">© 2026 TB NS Jaya</p>
         </div>
       </aside>
     </>
