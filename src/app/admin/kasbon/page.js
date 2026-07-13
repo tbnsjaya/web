@@ -10,6 +10,7 @@ export default function KasbonPage() {
   const { sales, items, payKasbon } = useStore();
   const [sortBy, setSortBy] = useState('due-date-asc');
   const [payModal, setPayModal] = useState(null);
+  const [detailModal, setDetailModal] = useState(null);
 
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const in7Days = new Date(now); in7Days.setDate(in7Days.getDate() + 7);
@@ -82,7 +83,12 @@ export default function KasbonPage() {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-amber-500">{formatCurrency(k.remaining)}</td>
-                    <td className="py-3 px-4 text-center"><button onClick={() => setPayModal(k)} className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-semibold hover:bg-emerald-600 shadow-sm transition-all btn-press">Bayar</button></td>
+                    <td className="py-3 px-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => setDetailModal(k)} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all btn-press">Detail</button>
+                        <button onClick={() => setPayModal(k)} className="px-3 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 shadow-sm transition-all btn-press">Bayar</button>
+                      </div>
+                    </td>
                   </tr>
                 );
               }) : <tr><td colSpan={5} className="py-12 text-center text-slate-400">Tidak ada kasbon pelanggan.</td></tr>}
@@ -111,6 +117,106 @@ export default function KasbonPage() {
                 <input name="amount" type="number" max={payModal.remaining} required className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm mb-4 border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" />
                 <div className="flex justify-end"><button type="submit" className="px-6 py-2.5 bg-emerald-500 text-white rounded-xl font-semibold hover:bg-emerald-600 shadow-lg shadow-emerald-500/25 transition-all btn-press">Catat Penerimaan</button></div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {detailModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setDetailModal(null)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up border border-slate-200/60 dark:border-slate-800 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <h3 className="text-lg font-bold">Rincian Nota Kasbon</h3>
+              <button onClick={() => setDetailModal(null)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
+            </div>
+            
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              <div className="text-center border-b border-dashed border-slate-200 dark:border-slate-800 pb-4">
+                <h4 className="font-extrabold text-xl tracking-wide">TB NS JAYA</h4>
+                <p className="text-xs text-slate-400">Nota Kasbon Pelanggan</p>
+                <div className="mt-2 text-left bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl text-xs space-y-1">
+                  <div className="flex justify-between"><span>No. Invoice:</span><span className="font-mono font-bold">{detailModal.id}</span></div>
+                  <div className="flex justify-between"><span>Tanggal:</span><span>{new Date(detailModal.date).toLocaleString('id-ID')}</span></div>
+                  <div className="flex justify-between"><span>Jatuh Tempo:</span><span className="text-red-500 font-bold">{detailModal.dueDate ? new Date(detailModal.dueDate).toLocaleDateString('id-ID') : '-'}</span></div>
+                  <div className="flex justify-between"><span>Pelanggan:</span><span className="font-bold">{detailModal.customerDetails?.name || '-'}</span></div>
+                  <div className="flex justify-between"><span>No. HP/WA:</span><span>{detailModal.customerDetails?.phone || '-'}</span></div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Barang</p>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {Array.isArray(detailModal.items) ? (
+                    detailModal.items.map((si, idx) => {
+                      const itemDef = items.find((i) => i.id === si.itemId);
+                      return (
+                        <div key={idx} className="py-2.5 flex justify-between items-start text-sm">
+                          <div>
+                            <p className="font-bold text-slate-800 dark:text-slate-200">{itemDef?.name || 'Barang Tidak Dikenal'}</p>
+                            <p className="text-xs text-slate-400">{si.quantity} {itemDef?.unit || ''} x {formatCurrency(si.price)}</p>
+                          </div>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">{formatCurrency(si.quantity * si.price)}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    (() => {
+                      const itemDef = items.find((i) => i.id === detailModal.itemId);
+                      return (
+                        <div className="py-2.5 flex justify-between items-start text-sm">
+                          <div>
+                            <p className="font-bold text-slate-800 dark:text-slate-200">{itemDef?.name || 'Barang Tidak Dikenal'}</p>
+                            <p className="text-xs text-slate-400">{detailModal.quantity} {itemDef?.unit || ''} x {formatCurrency(detailModal.pricePerItem || detailModal.totalPrice / (detailModal.quantity || 1))}</p>
+                          </div>
+                          <span className="font-bold text-slate-700 dark:text-slate-300">{formatCurrency(detailModal.totalPrice)}</span>
+                        </div>
+                      );
+                    })()
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-3 text-sm space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Total Belanja:</span>
+                  <span className="font-semibold">{formatCurrency(detailModal.totalPrice)}</span>
+                </div>
+                <div className="flex justify-between text-emerald-500">
+                  <span>Sudah Dibayar (Termasuk DP):</span>
+                  <span className="font-semibold">{formatCurrency(detailModal.paidAmount)}</span>
+                </div>
+                <div className="flex justify-between text-amber-500 text-base font-extrabold border-t border-slate-100 dark:border-slate-800 pt-1.5">
+                  <span>Sisa Tagihan Kasbon:</span>
+                  <span>{formatCurrency(detailModal.remaining)}</span>
+                </div>
+              </div>
+
+              {detailModal.paymentHistory?.length > 0 && (
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Pembayaran Cicilan</p>
+                  <table className="w-full text-xs text-slate-500">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-left">
+                        <th className="py-1">Tanggal</th>
+                        <th className="py-1">Metode</th>
+                        <th className="py-1 text-right">Jumlah</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100/50 dark:divide-slate-800/50">
+                      {detailModal.paymentHistory.map((h, i) => (
+                        <tr key={i}>
+                          <td className="py-1.5">{new Date(h.date).toLocaleDateString('id-ID')}</td>
+                          <td className="py-1.5 uppercase font-semibold text-[10px]">{h.method || 'tunai'}</td>
+                          <td className="py-1.5 text-right font-bold text-slate-700 dark:text-slate-300">{formatCurrency(h.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            
+            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <button onClick={() => setDetailModal(null)} className="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-300 transition-colors">Tutup</button>
             </div>
           </div>
         </div>
