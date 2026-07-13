@@ -4,7 +4,7 @@ import { decrypt } from '@/lib/session';
 // Tentukan rute mana saja yang ingin dilindungi, dan rute publik
 const publicRoutes = ['/login'];
 
-export async function middleware(req) {
+export async function proxy(req) {
   const path = req.nextUrl.pathname;
   const isPublicRoute = publicRoutes.includes(path);
 
