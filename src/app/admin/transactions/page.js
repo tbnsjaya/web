@@ -190,6 +190,9 @@ function CheckoutModal({ onClose }) {
   const [custId, setCustId] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('tunai');
+  const [showSettings, setShowSettings] = useState(false);
+  const { settings, updateSettings } = useStore();
 
   const handlePhoneSearch = (term) => {
     setCustPhone(term);
@@ -234,7 +237,7 @@ function CheckoutModal({ onClose }) {
       };
     }
 
-    const { invoiceNumber, totalPrice: total } = await checkout({ customer, isKasbon, dueDate, dpAmount, sendWa });
+    const { invoiceNumber, totalPrice: total } = await checkout({ customer, isKasbon, dueDate, dpAmount, sendWa, paymentMethod });
 
     toast.success('Transaksi Berhasil!');
     onClose();
@@ -294,6 +297,34 @@ function CheckoutModal({ onClose }) {
               )}
             </div>
 
+            {/* Payment Method */}
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-bold text-indigo-600 dark:text-indigo-400">Metode Pembayaran</label>
+                <button type="button" onClick={() => setShowSettings(true)} className="text-xs text-indigo-500 hover:underline font-semibold">Atur QRIS/Rekening</button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {['tunai', 'qris', 'transfer'].map(method => (
+                  <button key={method} type="button" onClick={() => setPaymentMethod(method)} className={`py-2 rounded-xl text-sm font-semibold capitalize border transition-all ${paymentMethod === method ? 'bg-indigo-500 text-white border-indigo-500 shadow-md' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>
+                    {method}
+                  </button>
+                ))}
+              </div>
+              
+              {paymentMethod === 'qris' && settings?.qrisImage && (
+                <div className="mt-3 text-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Scan QRIS</p>
+                  <img src={settings.qrisImage} alt="QRIS" className="h-40 mx-auto rounded-lg object-contain shadow-sm" />
+                </div>
+              )}
+              {paymentMethod === 'transfer' && settings?.bankDetails && (
+                <div className="mt-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Tujuan Transfer</p>
+                  <p className="text-sm font-semibold whitespace-pre-wrap">{settings.bankDetails}</p>
+                </div>
+              )}
+            </div>
+
             {/* WhatsApp */}
             <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
               <label className="flex items-center gap-3 cursor-pointer">
@@ -303,7 +334,7 @@ function CheckoutModal({ onClose }) {
             </div>
           </div>
 
-          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 rounded-b-2xl">
             <button type="button" onClick={onClose} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-300 transition-colors">Batal</button>
             <button type="submit" className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 shadow-lg shadow-emerald-500/25 transition-all btn-press flex items-center gap-2">
               <CreditCard className="w-4 h-4" /> Selesaikan Transaksi
@@ -311,6 +342,41 @@ function CheckoutModal({ onClose }) {
           </div>
         </form>
       </div>
+
+      {/* Settings Modal (for QRIS & Bank) */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-slate-900/60 z-[110] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowSettings(false)}>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl w-full max-w-sm shadow-2xl animate-slide-up border border-slate-200/60 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">Pengaturan Pembayaran</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold block mb-1">Upload QRIS Toko</label>
+                <input type="file" accept="image/*" onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const r = new FileReader();
+                    r.onload = () => updateSettings({ qrisImage: r.result });
+                    r.readAsDataURL(file);
+                  }
+                }} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer" />
+                {settings?.qrisImage && <img src={settings.qrisImage} className="h-24 mt-3 object-contain rounded-lg border border-slate-200 dark:border-slate-700 p-1" alt="QRIS" />}
+              </div>
+              <div>
+                <label className="text-sm font-semibold block mb-1">Detail Rekening Bank</label>
+                <p className="text-xs text-slate-400 mb-2">Format: Nama Bank - No. Rekening - Atas Nama</p>
+                <textarea 
+                  value={settings?.bankDetails || ''} 
+                  onChange={e => updateSettings({ bankDetails: e.target.value })} 
+                  className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 border border-transparent outline-none transition-all resize-none" 
+                  rows={3}
+                  placeholder="Contoh:&#10;BCA 1234567890 a.n Toko TB NS Jaya"
+                />
+              </div>
+            </div>
+            <button type="button" onClick={() => setShowSettings(false)} className="mt-5 w-full py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 transition-all btn-press">Simpan & Tutup</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -183,7 +183,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#94a3b8" />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatCurrency(v)} stroke="#94a3b8" />
                 <Tooltip 
-                  formatter={(value, name) => [formatCurrency(value), name === 'omzet' ? 'Omzet' : 'Keuntungan']}
+                  formatter={(value, name) => [formatCurrency(value), name]}
                   labelStyle={{ color: '#0f172a' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />

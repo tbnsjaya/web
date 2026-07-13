@@ -12,6 +12,16 @@ export default function ItemsPage() {
   const [sortBy, setSortBy] = useState('name-asc');
   const [modal, setModal] = useState(null); // null | 'add' | 'edit' | 'adjust' | 'categories'
   const [editingItem, setEditingItem] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+
+  const handleImageUpload = useCallback((e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  }, []);
 
   const filteredItems = useMemo(() => {
     let list = items.filter(
@@ -40,11 +50,12 @@ export default function ItemsPage() {
       hpp: parseFloat(form.hpp.value),
       salePrice: parseFloat(form.salePrice.value),
       initialStock: parseFloat(form.initialStock.value),
-      imageUrl: form.imageUrl.value,
+      imageUrl: imagePreview,
     });
     setModal(null);
+    setImagePreview('');
     toast.success('Barang berhasil disimpan.');
-  }, [addItem]);
+  }, [addItem, imagePreview]);
 
   const handleEditItem = useCallback((e) => {
     e.preventDefault();
@@ -55,12 +66,13 @@ export default function ItemsPage() {
       unit: form.unit.value,
       hpp: parseFloat(form.hpp.value),
       salePrice: parseFloat(form.salePrice.value),
-      imageUrl: form.imageUrl.value,
+      imageUrl: imagePreview || editingItem.imageUrl,
     });
     setModal(null);
     setEditingItem(null);
+    setImagePreview('');
     toast.success('Barang diperbarui.');
-  }, [editingItem, updateItem]);
+  }, [editingItem, updateItem, imagePreview]);
 
   const handleAdjustStock = useCallback((e) => {
     e.preventDefault();
@@ -173,14 +185,14 @@ export default function ItemsPage() {
 
       {/* Modals */}
       {modal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => { setModal(null); setEditingItem(null); }}>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => { setModal(null); setEditingItem(null); setImagePreview(''); }}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col animate-slide-up border border-slate-200/60 dark:border-slate-800" onClick={(e) => e.stopPropagation()}>
             {/* Add Item Modal */}
             {modal === 'add' && (
               <form onSubmit={handleAddItem}>
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="text-lg font-bold">Barang Baru</h3>
-                  <button type="button" onClick={() => setModal(null)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
+                  <button type="button" onClick={() => { setModal(null); setImagePreview(''); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -197,7 +209,7 @@ export default function ItemsPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="text-sm font-semibold mb-1 block">Stok Awal</label><input name="initialStock" type="number" step="any" defaultValue="0" required className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" /></div>
-                    <div><label className="text-sm font-semibold mb-1 block">Link Gambar</label><input name="imageUrl" type="url" placeholder="https://..." className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" /></div>
+                    <div><label className="text-sm font-semibold mb-1 block">Gambar Barang</label><input type="file" accept="image/*" onChange={handleImageUpload} className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500" />{imagePreview && <img src={imagePreview} alt="Preview" className="h-10 mt-2 rounded object-cover" />}</div>
                   </div>
                 </div>
                 <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
@@ -212,7 +224,7 @@ export default function ItemsPage() {
               <form onSubmit={handleEditItem}>
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <h3 className="text-lg font-bold">Edit Barang</h3>
-                  <button type="button" onClick={() => { setModal(null); setEditingItem(null); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
+                  <button type="button" onClick={() => { setModal(null); setEditingItem(null); setImagePreview(''); }} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -227,7 +239,7 @@ export default function ItemsPage() {
                     <div><label className="text-sm font-semibold mb-1 block">Harga Awal (HPP)</label><input name="hpp" type="number" defaultValue={editingItem.hpp} required className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" /></div>
                     <div><label className="text-sm font-semibold mb-1 block">Harga Jual</label><input name="salePrice" type="number" defaultValue={editingItem.salePrice} required className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" /></div>
                   </div>
-                  <div><label className="text-sm font-semibold mb-1 block">Link Gambar</label><input name="imageUrl" type="url" defaultValue={editingItem.imageUrl || ''} placeholder="https://..." className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" /></div>
+                  <div><label className="text-sm font-semibold mb-1 block">Ganti Gambar</label><input type="file" accept="image/*" onChange={handleImageUpload} className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500" />{(imagePreview || editingItem.imageUrl) && <img src={imagePreview || editingItem.imageUrl} alt="Preview" className="h-10 mt-2 rounded object-cover" />}</div>
                 </div>
                 <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
                   <button type="button" onClick={() => { setModal(null); setEditingItem(null); }} className="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-300 transition-colors">Batal</button>

@@ -70,11 +70,17 @@ const useStore = create((set, get) => ({
     await get().loadData();
   },
 
-  // --- Theme ---
+  // --- Theme & Settings ---
   toggleTheme: () => {
     const { settings } = get();
     const newTheme = settings.theme === 'light' ? 'dark' : 'light';
     set({ settings: { ...settings, theme: newTheme } });
+    get().saveData();
+  },
+  
+  updateSettings: (newSettings) => {
+    const { settings } = get();
+    set({ settings: { ...settings, ...newSettings } });
     get().saveData();
   },
 
@@ -196,7 +202,7 @@ const useStore = create((set, get) => ({
   clearCart: () => set({ posCart: [] }),
 
   // --- Checkout ---
-  checkout: async ({ customer, isKasbon, dueDate, dpAmount, sendWa }) => {
+  checkout: async ({ customer, isKasbon, dueDate, dpAmount, sendWa, paymentMethod }) => {
     const { posCart, items, purchases, sales } = get();
     const totalPrice = posCart.reduce((sum, c) => sum + c.qty * c.price, 0);
     const dateIso = new Date().toISOString();
@@ -236,11 +242,12 @@ const useStore = create((set, get) => ({
         isKasbon,
         isPaid: paidLine >= lineTotal,
         paidAmount: paidLine,
-        paymentHistory: paidLine > 0 && isKasbon ? [{ date: dateIso, amount: paidLine }] : [],
+        paymentHistory: paidLine > 0 && isKasbon ? [{ date: dateIso, amount: paidLine, method: paymentMethod || 'tunai' }] : [],
         customerDetails: customer
           ? { name: customer.name, phone: customer.phone, address: customer.address }
           : null,
         dueDate: dueDate || null,
+        paymentMethod: paymentMethod || 'tunai',
       };
     });
 
