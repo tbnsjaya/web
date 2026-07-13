@@ -68,7 +68,19 @@ export default function KasbonPage() {
                   <tr key={k.id} className={`border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${isOverdue ? 'row-warning' : ''}`}>
                     <td className={`py-3 px-4 font-bold text-sm ${isOverdue ? 'text-red-500' : ''}`}>{k.dueDate ? new Date(k.dueDate).toLocaleDateString('id-ID') : '-'}</td>
                     <td className="py-3 px-4"><p className="font-bold text-sm">{k.customerDetails?.name}</p><p className="text-xs text-slate-400">{k.customerDetails?.phone}</p></td>
-                    <td className="py-3 px-4 text-sm text-slate-500">{item?.name} ({k.quantity} {item?.unit})</td>
+                    <td className="py-3 px-4 text-sm text-slate-500 max-w-xs truncate">
+                      {Array.isArray(k.items) ? (
+                        k.items.map((si) => {
+                          const i = items.find((it) => it.id === si.itemId);
+                          return `${i?.name || '-'} (${si.quantity} ${i?.unit || ''})`;
+                        }).join(', ')
+                      ) : (
+                        (() => {
+                          const i = items.find((it) => it.id === k.itemId);
+                          return `${i?.name || '-'} (${k.quantity} ${i?.unit || ''})`;
+                        })()
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-right font-bold text-amber-500">{formatCurrency(k.remaining)}</td>
                     <td className="py-3 px-4 text-center"><button onClick={() => setPayModal(k)} className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-semibold hover:bg-emerald-600 shadow-sm transition-all btn-press">Bayar</button></td>
                   </tr>

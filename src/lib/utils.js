@@ -29,7 +29,15 @@ export function calculateStock(itemId, items, purchases, sales) {
   const item = items.find((i) => i.id === itemId);
   if (!item) return 0;
   const bought = purchases.filter((p) => p.itemId === itemId).reduce((s, p) => s + p.quantity, 0);
-  const sold = sales.filter((s) => s.itemId === itemId).reduce((s, s1) => s + s1.quantity, 0);
+  let sold = 0;
+  sales.forEach((s) => {
+    if (s.itemId === itemId) {
+      sold += s.quantity || 0;
+    } else if (Array.isArray(s.items)) {
+      const match = s.items.find((si) => si.itemId === itemId);
+      if (match) sold += match.quantity || 0;
+    }
+  });
   return item.initialStock + bought - sold;
 }
 

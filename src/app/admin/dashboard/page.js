@@ -69,9 +69,19 @@ export default function DashboardPage() {
     sales.forEach(sale => {
       if (!sale.date) return;
       const saleDate = new Date(sale.date);
-      const item = items.find(i => i.id === sale.itemId);
-      const omzet = sale.totalPrice || 0;
-      const profit = item ? (sale.pricePerItem - item.hpp) * sale.quantity : 0;
+      
+      let omzet = sale.totalPrice || 0;
+      let profit = 0;
+
+      if (Array.isArray(sale.items)) {
+        sale.items.forEach(si => {
+          const item = items.find(i => i.id === si.itemId);
+          profit += item ? (si.price - item.hpp) * si.quantity : 0;
+        });
+      } else {
+        const item = items.find(i => i.id === sale.itemId);
+        profit = item ? (sale.pricePerItem - item.hpp) * sale.quantity : 0;
+      }
 
       if (timeFilter === 'mingguan') {
         const diffDays = Math.floor((now - saleDate) / (1000 * 60 * 60 * 24));
@@ -109,24 +119,41 @@ export default function DashboardPage() {
     return result;
   }, [sales, items, timeFilter]);
 
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalPrice, 0);
+  const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalPrice || 0), 0);
   const totalGrossProfit = sales.reduce((sum, sale) => {
-    const item = items.find((i) => i.id === sale.itemId);
-    return item ? sum + (sale.pricePerItem - item.hpp) * sale.quantity : sum;
+    if (Array.isArray(sale.items)) {
+      const transactionProfit = sale.items.reduce((sProfit, si) => {
+        const item = items.find((i) => i.id === si.itemId);
+        return item ? sProfit + (si.price - item.hpp) * si.quantity : sProfit;
+      }, 0);
+      return sum + transactionProfit;
+    } else {
+      const item = items.find((i) => i.id === sale.itemId);
+      return item ? sum + (sale.pricePerItem - item.hpp) * sale.quantity : sum;
+    }
   }, 0);
   const totalTransactions = sales.length;
   const totalPiutang = sales
     .filter((s) => s.isKasbon && !s.isPaid)
-    .reduce((sum, s) => sum + (s.totalPrice - s.paidAmount), 0);
+    .reduce((sum, s) => sum + ((s.totalPrice || 0) - (s.paidAmount || 0)), 0);
 
   // Best selling items
   const itemSalesQty = {};
   const itemSalesProfit = {};
   sales.forEach((sale) => {
-    const item = items.find((i) => i.id === sale.itemId);
-    if (!item) return;
-    itemSalesQty[item.name] = (itemSalesQty[item.name] || 0) + sale.quantity;
-    itemSalesProfit[item.name] = (itemSalesProfit[item.name] || 0) + (sale.pricePerItem - item.hpp) * sale.quantity;
+    if (Array.isArray(sale.items)) {
+      sale.items.forEach(si => {
+        const item = items.find((i) => i.id === si.itemId);
+        if (!item) return;
+        itemSalesQty[item.name] = (itemSalesQty[item.name] || 0) + si.quantity;
+        itemSalesProfit[item.name] = (itemSalesProfit[item.name] || 0) + (si.price - item.hpp) * si.quantity;
+      });
+    } else {
+      const item = items.find((i) => i.id === sale.itemId);
+      if (!item) return;
+      itemSalesQty[item.name] = (itemSalesQty[item.name] || 0) + sale.quantity;
+      itemSalesProfit[item.name] = (itemSalesProfit[item.name] || 0) + (sale.pricePerItem - item.hpp) * sale.quantity;
+    }
   });
 
   const bestSelling = Object.entries(itemSalesQty)

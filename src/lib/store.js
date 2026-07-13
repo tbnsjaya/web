@@ -29,15 +29,32 @@ const useStore = create((set, get) => ({
           categories: data.categories || [],
           customers: data.customers || [],
           purchases: (data.purchases || []).map((p) => ({ ...p, paymentHistory: p.paymentHistory || [] })),
-          sales: (data.sales || []).map((s) => ({
-            ...s,
-            isKasbon: s.isKasbon || false,
-            customerDetails: s.customerDetails || null,
-            dueDate: s.dueDate || null,
-            isPaid: s.isPaid === undefined ? true : s.isPaid,
-            paidAmount: s.paidAmount === undefined ? s.totalPrice : s.paidAmount,
-            paymentHistory: s.paymentHistory || [],
-          })),
+          sales: (data.sales || []).map((s) => {
+            let normalizedItems = [];
+            if (s.items) {
+              try {
+                normalizedItems = Array.isArray(s.items) ? s.items : JSON.parse(s.items);
+              } catch (err) {
+                normalizedItems = [];
+              }
+            } else if (s.itemId) {
+              normalizedItems = [{
+                itemId: s.itemId,
+                quantity: s.quantity || 0,
+                price: s.pricePerItem || 0
+              }];
+            }
+            return {
+              ...s,
+              items: normalizedItems,
+              isKasbon: s.isKasbon || false,
+              customerDetails: s.customerDetails || null,
+              dueDate: s.dueDate || null,
+              isPaid: s.isPaid === undefined ? true : s.isPaid,
+              paidAmount: s.paidAmount === undefined ? s.totalPrice : s.paidAmount,
+              paymentHistory: s.paymentHistory || [],
+            };
+          }),
         });
         if (data.settings) set({ settings: data.settings });
       }
@@ -208,51 +225,37 @@ const useStore = create((set, get) => ({
     const dateIso = new Date().toISOString();
     const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
     let lowStockAlerts = [];
-    let remainingDp = dpAmount || 0;
 
-    const newSales = posCart.map((cartItem, idx) => {
-      const lineTotal = cartItem.qty * cartItem.price;
-      let paidLine = 0;
-      if (!isKasbon) {
-        paidLine = lineTotal;
-      } else if (remainingDp > 0) {
-        if (remainingDp >= lineTotal) {
-          paidLine = lineTotal;
-          remainingDp -= lineTotal;
-        } else {
-          paidLine = remainingDp;
-          remainingDp = 0;
+    const newSale = {
+      id: invoiceNumber,
+      items: posCart.map((cartItem) => {
+        const oldStock = calculateStock(cartItem.itemId, items, purchases, sales);
+        const newStock = oldStock - cartItem.qty;
+        if (newStock <= 10 && oldStock > 10) {
+          const itemDef = items.find((i) => i.id === cartItem.itemId);
+          if (itemDef) lowStockAlerts.push(`- *${itemDef.name}* (Sisa: ${newStock} ${itemDef.unit})`);
         }
-      }
-
-      const oldStock = calculateStock(cartItem.itemId, items, purchases, sales);
-      const newStock = oldStock - cartItem.qty;
-      if (newStock <= 10 && oldStock > 10) {
-        const itemDef = items.find((i) => i.id === cartItem.itemId);
-        if (itemDef) lowStockAlerts.push(`- *${itemDef.name}* (Sisa: ${newStock} ${itemDef.unit})`);
-      }
-
-      return {
-        id: `${invoiceNumber}-${idx}`,
-        itemId: cartItem.itemId,
-        quantity: cartItem.qty,
-        pricePerItem: cartItem.price,
-        totalPrice: lineTotal,
-        date: dateIso,
-        isKasbon,
-        isPaid: paidLine >= lineTotal,
-        paidAmount: paidLine,
-        paymentHistory: paidLine > 0 && isKasbon ? [{ date: dateIso, amount: paidLine, method: paymentMethod || 'tunai' }] : [],
-        customerDetails: customer
-          ? { name: customer.name, phone: customer.phone, address: customer.address }
-          : null,
-        dueDate: dueDate || null,
-        paymentMethod: paymentMethod || 'tunai',
-      };
-    });
+        return {
+          itemId: cartItem.itemId,
+          quantity: cartItem.qty,
+          price: cartItem.price,
+        };
+      }),
+      totalPrice,
+      date: dateIso,
+      isKasbon,
+      isPaid: !isKasbon || (dpAmount || 0) >= totalPrice,
+      paidAmount: isKasbon ? dpAmount || 0 : totalPrice,
+      paymentHistory: (dpAmount > 0 && isKasbon) ? [{ date: dateIso, amount: dpAmount, method: paymentMethod || 'tunai' }] : [],
+      customerDetails: customer
+        ? { name: customer.name, phone: customer.phone, address: customer.address }
+        : null,
+      dueDate: dueDate || null,
+      paymentMethod: paymentMethod || 'tunai',
+    };
 
     set((state) => ({
-      sales: [...state.sales, ...newSales],
+      sales: [...state.sales, newSale],
       posCart: [],
     }));
 

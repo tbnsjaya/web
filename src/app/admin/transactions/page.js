@@ -503,15 +503,45 @@ function HistoryTab() {
     await import('jspdf-autotable');
     const doc = new jsPDF();
     doc.text('Riwayat Penjualan', 14, 16);
-    const rows = sortedSales.map((s) => { const i = items.find((it) => it.id === s.itemId); return [new Date(s.date).toLocaleString('id-ID'), i?.name || '-', `${s.quantity} ${i?.unit || ''}`, formatCurrency(s.totalPrice)]; });
-    doc.autoTable(['Tanggal', 'Barang', 'Kuantitas', 'Total'], rows, { startY: 20 });
+    const rows = sortedSales.map((s) => {
+      let itemsStr = '';
+      if (Array.isArray(s.items)) {
+        itemsStr = s.items.map(si => {
+          const i = items.find((it) => it.id === si.itemId);
+          return `${i?.name || '-'} (${si.quantity} ${i?.unit || ''})`;
+        }).join(', ');
+      } else {
+        const i = items.find((it) => it.id === s.itemId);
+        itemsStr = `${i?.name || '-'} (${s.quantity} ${i?.unit || ''})`;
+      }
+      return [new Date(s.date).toLocaleString('id-ID'), itemsStr, formatCurrency(s.totalPrice)];
+    });
+    doc.autoTable(['Tanggal', 'Barang (Kuantitas)', 'Total'], rows, { startY: 20 });
     doc.save(`Penjualan-${Date.now()}.pdf`);
     toast.success('PDF Diunduh');
   };
 
   const handleExportSalesExcel = async () => {
     const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(sortedSales.map((s) => { const i = items.find((it) => it.id === s.itemId); return { Tanggal: new Date(s.date).toLocaleString(), Barang: i?.name || '-', Qty: s.quantity, Satuan: i?.unit || '', Total: s.totalPrice, Tipe: s.isKasbon ? 'Kasbon' : 'Cash' }; }));
+    const ws = XLSX.utils.json_to_sheet(sortedSales.map((s) => {
+      let itemsStr = '';
+      if (Array.isArray(s.items)) {
+        itemsStr = s.items.map(si => {
+          const i = items.find((it) => it.id === si.itemId);
+          return `${i?.name || '-'} (${si.quantity} ${i?.unit || ''})`;
+        }).join(', ');
+      } else {
+        const i = items.find((it) => it.id === s.itemId);
+        itemsStr = `${i?.name || '-'} (${s.quantity} ${i?.unit || ''})`;
+      }
+      return { 
+        Tanggal: new Date(s.date).toLocaleString(), 
+        Barang: itemsStr, 
+        Total: s.totalPrice, 
+        Tipe: s.isKasbon ? 'Kasbon' : 'Cash',
+        Metode: s.paymentMethod || 'tunai'
+      };
+    }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Penjualan');
     XLSX.writeFile(wb, `Penjualan-${Date.now()}.xlsx`);
     toast.success('Excel Diunduh');
@@ -533,11 +563,22 @@ function HistoryTab() {
             <thead><tr className="border-b-2 border-slate-100 dark:border-slate-800"><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Tanggal</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Barang</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Pelanggan</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-right">Total</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-center">Status</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-center">Aksi</th></tr></thead>
             <tbody>
               {sortedSales.length > 0 ? sortedSales.map((s) => {
-                const item = items.find((i) => i.id === s.itemId);
                 return (
                   <tr key={s.id} className="border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="py-3 px-4 text-sm">{new Date(s.date).toLocaleString('id-ID')}</td>
-                    <td className="py-3 px-4 text-sm">{item?.name} ({s.quantity} {item?.unit})</td>
+                    <td className="py-3 px-4 text-sm max-w-xs truncate">
+                      {Array.isArray(s.items) ? (
+                        s.items.map((si) => {
+                          const i = items.find((it) => it.id === si.itemId);
+                          return `${i?.name || '-'} (${si.quantity} ${i?.unit || ''})`;
+                        }).join(', ')
+                      ) : (
+                        (() => {
+                          const i = items.find((it) => it.id === s.itemId);
+                          return `${i?.name || '-'} (${s.quantity} ${i?.unit || ''})`;
+                        })()
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-sm">{s.isKasbon ? s.customerDetails?.name : 'Cash'}</td>
                     <td className="py-3 px-4 text-sm text-right font-bold">{formatCurrency(s.totalPrice)}</td>
                     <td className="py-3 px-4 text-center">
