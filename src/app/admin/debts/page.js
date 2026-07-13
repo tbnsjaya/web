@@ -12,6 +12,13 @@ export default function DebtsPage() {
   const [payModal, setPayModal] = useState(null);
 
   const now = new Date(); now.setHours(0, 0, 0, 0);
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    return d.toLocaleDateString('id-ID');
+  };
+
   const in7Days = new Date(now); in7Days.setDate(in7Days.getDate() + 7);
 
   const unpaidDebts = useMemo(() => {
@@ -68,7 +75,7 @@ export default function DebtsPage() {
                 const isOverdue = d.dueDate && new Date(d.dueDate) < now;
                 return (
                   <tr key={d.id} className={`border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${isOverdue ? 'row-warning' : ''}`}>
-                    <td className={`py-3 px-4 font-bold text-sm ${isOverdue ? 'text-red-500' : ''}`}>{d.dueDate ? new Date(d.dueDate).toLocaleDateString('id-ID') : '-'}</td>
+                    <td className={`py-3 px-4 font-bold text-sm ${isOverdue ? 'text-red-500' : ''}`}>{formatDate(d.dueDate)}</td>
                     <td className="py-3 px-4 text-sm">{d.supplier}</td>
                     <td className="py-3 px-4 text-sm text-slate-500">{item?.name}</td>
                     <td className="py-3 px-4 text-right font-bold text-red-500">{formatCurrency(d.remaining)}</td>

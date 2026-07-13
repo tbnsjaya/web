@@ -15,6 +15,13 @@ export default function KasbonPage() {
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const in7Days = new Date(now); in7Days.setDate(in7Days.getDate() + 7);
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
+    return d.toLocaleDateString('id-ID');
+  };
+
   const unpaidKasbons = useMemo(() => {
     let list = sales.filter((s) => s.isKasbon && !s.isPaid).map((s) => ({ ...s, remaining: s.totalPrice - s.paidAmount }));
     list.sort((a, b) => {
@@ -67,7 +74,7 @@ export default function KasbonPage() {
                 const isOverdue = k.dueDate && new Date(k.dueDate) < now;
                 return (
                   <tr key={k.id} className={`border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${isOverdue ? 'row-warning' : ''}`}>
-                    <td className={`py-3 px-4 font-bold text-sm ${isOverdue ? 'text-red-500' : ''}`}>{k.dueDate ? new Date(k.dueDate).toLocaleDateString('id-ID') : '-'}</td>
+                    <td className={`py-3 px-4 font-bold text-sm ${isOverdue ? 'text-red-500' : ''}`}>{formatDate(k.dueDate)}</td>
                     <td className="py-3 px-4"><p className="font-bold text-sm">{k.customerDetails?.name}</p><p className="text-xs text-slate-400">{k.customerDetails?.phone}</p></td>
                     <td className="py-3 px-4 text-sm text-slate-500 max-w-xs truncate">
                       {Array.isArray(k.items) ? (
@@ -136,7 +143,7 @@ export default function KasbonPage() {
                 <div className="mt-2 text-left bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl text-xs space-y-1">
                   <div className="flex justify-between"><span>No. Invoice:</span><span className="font-mono font-bold">{detailModal.id}</span></div>
                   <div className="flex justify-between"><span>Tanggal:</span><span>{new Date(detailModal.date).toLocaleString('id-ID')}</span></div>
-                  <div className="flex justify-between"><span>Jatuh Tempo:</span><span className="text-red-500 font-bold">{detailModal.dueDate ? new Date(detailModal.dueDate).toLocaleDateString('id-ID') : '-'}</span></div>
+                  <div className="flex justify-between"><span>Jatuh Tempo:</span><span className="text-red-500 font-bold">{formatDate(detailModal.dueDate)}</span></div>
                   <div className="flex justify-between"><span>Pelanggan:</span><span className="font-bold">{detailModal.customerDetails?.name || '-'}</span></div>
                   <div className="flex justify-between"><span>No. HP/WA:</span><span>{detailModal.customerDetails?.phone || '-'}</span></div>
                 </div>

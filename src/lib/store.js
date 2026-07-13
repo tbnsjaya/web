@@ -47,12 +47,13 @@ const useStore = create((set, get) => ({
             return {
               ...s,
               items: normalizedItems,
-              isKasbon: s.isKasbon || false,
-              customerDetails: s.customerDetails || null,
-              dueDate: s.dueDate || null,
-              isPaid: s.isPaid === undefined ? true : s.isPaid,
-              paidAmount: s.paidAmount === undefined ? s.totalPrice : s.paidAmount,
-              paymentHistory: s.paymentHistory || [],
+              isKasbon: s.isKasbon === true || s.isKasbon === 'true' || s.is_kasbon === true || s.is_kasbon === 'true' || false,
+              customerDetails: s.customerDetails || s.customer_details || null,
+              dueDate: s.dueDate || s.due_date || s['Jatuh Tempo'] || s['jatuh_tempo'] || null,
+              isPaid: s.isPaid === undefined ? (s.is_paid === undefined ? true : s.is_paid) : s.isPaid,
+              paidAmount: s.paidAmount === undefined ? (s.paid_amount === undefined ? s.totalPrice : s.paid_amount) : s.paidAmount,
+              paymentHistory: s.paymentHistory || s.payment_history || [],
+              paymentMethod: s.paymentMethod || s.payment_method || 'tunai',
             };
           }),
         });
