@@ -1,9 +1,10 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import useStore from '@/lib/store';
 import { formatCurrency, calculateStock } from '@/lib/utils';
-import { TrendingUp, DollarSign, AlertTriangle, ShoppingCart } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, DollarSign, AlertTriangle, ShoppingCart, Calendar } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
 function KpiCard({ label, value, icon: Icon, color, delay }) {
   const colorMap = {
@@ -27,6 +28,86 @@ function KpiCard({ label, value, icon: Icon, color, delay }) {
 
 export default function DashboardPage() {
   const { items, sales, purchases, categories } = useStore();
+  const [timeFilter, setTimeFilter] = useState('mingguan');
+
+  const lineChartData = useMemo(() => {
+    const now = new Date();
+    const result = [];
+    
+    if (timeFilter === 'mingguan') {
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        result.push({
+          dateStr: d.toDateString(),
+          name: d.toLocaleDateString('id-ID', { weekday: 'short' }),
+          omzet: 0,
+          keuntungan: 0
+        });
+      }
+    } else if (timeFilter === 'bulanan') {
+      for (let i = 3; i >= 0; i--) {
+        result.push({
+          weekOffset: i, 
+          name: `Minggu ke-${4-i}`,
+          omzet: 0,
+          keuntungan: 0
+        });
+      }
+    } else if (timeFilter === 'tahunan') {
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), i, 1);
+        result.push({
+          monthIndex: i,
+          name: d.toLocaleDateString('id-ID', { month: 'short' }),
+          omzet: 0,
+          keuntungan: 0
+        });
+      }
+    }
+
+    sales.forEach(sale => {
+      if (!sale.date) return;
+      const saleDate = new Date(sale.date);
+      const item = items.find(i => i.id === sale.itemId);
+      const omzet = sale.totalPrice || 0;
+      const profit = item ? (sale.pricePerItem - item.hpp) * sale.quantity : 0;
+
+      if (timeFilter === 'mingguan') {
+        const diffDays = Math.floor((now - saleDate) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0 && diffDays < 7) {
+          const bucket = result.find(r => r.dateStr === saleDate.toDateString());
+          if (bucket) {
+            bucket.omzet += omzet;
+            bucket.keuntungan += profit;
+          }
+        }
+      } else if (timeFilter === 'bulanan') {
+        const diffDays = Math.floor((now - saleDate) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 0 && diffDays < 28) {
+          const weekOffset = Math.floor(diffDays / 7);
+          const bucket = result.find(r => r.weekOffset === weekOffset);
+          if (bucket) {
+            bucket.omzet += omzet;
+            bucket.keuntungan += profit;
+          }
+        }
+      } else if (timeFilter === 'tahunan') {
+        if (saleDate.getFullYear() === now.getFullYear()) {
+          const bucket = result.find(r => r.monthIndex === saleDate.getMonth());
+          if (bucket) {
+            bucket.omzet += omzet;
+            bucket.keuntungan += profit;
+          }
+        }
+      }
+    });
+
+    // reverse for chronological order
+    if(timeFilter === 'bulanan') result.reverse();
+
+    return result;
+  }, [sales, items, timeFilter]);
 
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalPrice, 0);
   const totalGrossProfit = sales.reduce((sum, sale) => {
@@ -75,6 +156,45 @@ export default function DashboardPage() {
         <KpiCard label="Total Laba Kotor" value={formatCurrency(totalGrossProfit)} icon={TrendingUp} color="emerald" delay={2} />
         <KpiCard label="Total Piutang Kasbon" value={formatCurrency(totalPiutang)} icon={AlertTriangle} color="amber" delay={3} />
         <KpiCard label="Total Transaksi" value={totalTransactions.toString()} icon={ShoppingCart} color="slate" delay={4} />
+      </div>
+
+      {/* Omzet & Profit Line Chart */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200/60 dark:border-slate-800 shadow-sm mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-indigo-500" />
+            Grafik Omzet & Keuntungan
+          </h3>
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value)}
+            className="text-sm border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+          >
+            <option value="mingguan">7 Hari Terakhir</option>
+            <option value="bulanan">4 Minggu Terakhir</option>
+            <option value="tahunan">Tahun Ini</option>
+          </select>
+        </div>
+        <div className="h-[300px] w-full">
+          {lineChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={lineChartData} margin={{ top: 5, right: 5, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatCurrency(v)} stroke="#94a3b8" />
+                <Tooltip 
+                  formatter={(value, name) => [formatCurrency(value), name === 'omzet' ? 'Omzet' : 'Keuntungan']}
+                  labelStyle={{ color: '#0f172a' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="monotone" dataKey="omzet" name="Omzet" stroke="#6366f1" strokeWidth={3} activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="keuntungan" name="Keuntungan" stroke="#10b981" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+             <div className="h-full flex items-center justify-center text-slate-400">Belum ada data penjualan</div>
+          )}
+        </div>
       </div>
 
       {/* Charts */}
