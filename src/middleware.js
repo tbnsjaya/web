@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { decrypt } from '@/lib/auth';
+import { decrypt } from '@/lib/session';
 
 // Tentukan rute mana saja yang ingin dilindungi, dan rute publik
 const publicRoutes = ['/login'];

@@ -1,7 +1,8 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { encrypt, verifyPassword } from '@/lib/auth';
+import { verifyPassword } from '@/lib/auth';
+import { encrypt } from '@/lib/session';
 import { redirect } from 'next/navigation';
 
 export async function loginAction(prevState, formData) {
