@@ -39,7 +39,7 @@ export async function loginAction(prevState, formData) {
     path: '/',
   });
 
-  redirect('/');
+  redirect('/admin/dashboard');
 }
 
 export async function logoutAction() {

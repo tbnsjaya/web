@@ -195,13 +195,12 @@ function CheckoutModal({ onClose }) {
   const [showSettings, setShowSettings] = useState(false);
   const { settings, updateSettings } = useStore();
   const [isUploadingQris, setIsUploadingQris] = useState(false);
-  const [localBankDetails, setLocalBankDetails] = useState('');
-
-  useEffect(() => {
-    if (settings?.bankDetails) {
-      setLocalBankDetails(settings.bankDetails);
-    }
-  }, [settings?.bankDetails]);
+  const [localBankDetails, setLocalBankDetails] = useState(settings?.bankDetails || '');
+  const [prevBankDetails, setPrevBankDetails] = useState(settings?.bankDetails);
+  if (settings?.bankDetails && settings.bankDetails !== prevBankDetails) {
+    setPrevBankDetails(settings.bankDetails);
+    setLocalBankDetails(settings.bankDetails);
+  }
 
   const handlePhoneSearch = (term) => {
     setCustPhone(term);

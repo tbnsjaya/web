@@ -14,7 +14,12 @@ export default function ItemsPage() {
   const [modal, setModal] = useState(null); // null | 'add' | 'edit' | 'adjust' | 'categories'
   const [editingItem, setEditingItem] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const [newItemCode, setNewItemCode] = useState('');
+
+  const openAddModal = () => {
+    setNewItemCode(`BRG-${Date.now().toString().slice(-5)}`);
+    setModal('add');
+  };
 
   const handleImageUpload = useCallback((e) => {
     const file = e.target.files[0];
@@ -173,7 +178,7 @@ export default function ItemsPage() {
             <button onClick={() => setModal('categories')} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
               <Tags className="w-4 h-4" /> Kategori
             </button>
-            <button onClick={() => setModal('add')} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all btn-press">
+            <button onClick={openAddModal} className="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all btn-press">
               <Plus className="w-4 h-4" /> Barang Baru
             </button>
           </div>
@@ -250,7 +255,7 @@ export default function ItemsPage() {
                 </div>
                 <div className="p-6 overflow-y-auto space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="text-sm font-semibold mb-1 block">Kode</label><input name="code" defaultValue={`BRG-${Date.now().toString().slice(-5)}`} readOnly className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border-none" /></div>
+                    <div><label className="text-sm font-semibold mb-1 block">Kode</label><input name="code" defaultValue={newItemCode} readOnly className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border-none" /></div>
                     <div><label className="text-sm font-semibold mb-1 block">Nama</label><input name="name" required className="w-full px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">

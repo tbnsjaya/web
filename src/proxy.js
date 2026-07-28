@@ -18,7 +18,7 @@ export async function proxy(req) {
 
   // Jika mencoba mengakses rute login padahal sudah ada sesi, redirect ke dashboard
   if (isPublicRoute && session && path === '/login') {
-    return NextResponse.redirect(new URL('/', req.nextUrl));
+    return NextResponse.redirect(new URL('/admin/dashboard', req.nextUrl));
   }
 
   return NextResponse.next();

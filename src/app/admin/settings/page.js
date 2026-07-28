@@ -13,11 +13,11 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Sync state with settings when loaded
-  useEffect(() => {
-    if (settings?.bankDetails) {
-      setBankDetails(settings.bankDetails);
-    }
-  }, [settings?.bankDetails]);
+  const [prevBankDetails, setPrevBankDetails] = useState(settings?.bankDetails);
+  if (settings?.bankDetails && settings.bankDetails !== prevBankDetails) {
+    setPrevBankDetails(settings.bankDetails);
+    setBankDetails(settings.bankDetails);
+  }
 
   const handleQrisUpload = async (e) => {
     const file = e.target.files[0];
