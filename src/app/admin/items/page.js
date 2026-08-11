@@ -245,7 +245,7 @@ export default function ItemsPage() {
 
       {/* Modals */}
       {modal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => { setModal(null); setEditingItem(null); setImagePreview(''); }}>
+        <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => { setModal(null); setEditingItem(null); setImagePreview(''); }}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col animate-slide-up border border-slate-200/60 dark:border-slate-800" onClick={(e) => e.stopPropagation()}>
             {/* Add Item Modal */}
             {modal === 'add' && (

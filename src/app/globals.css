@@ -35,8 +35,7 @@
 
 /* Light card — used in dashboard & landing page */
 .glass-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(148, 163, 184, 0.25);
   box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.06);
 }
@@ -131,11 +130,8 @@
   background-color: rgba(127, 29, 29, 0.3) !important;
 }
 
-/* === GLASSMORPHISM HEADER (Dashboard Login Card) === */
 .glass-header {
-  background-color: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.98);
 }
 
 .dark .glass-header {

@@ -135,7 +135,7 @@ export default function KasbonPage() {
               {filteredKasbons.length > 0 ? filteredKasbons.map((k) => {
                 const isOverdue = k.dueDate && new Date(k.dueDate) < now;
                 return (
-                  <tr key={k.id} className={`border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${activeTab === 'unpaid' && isOverdue ? 'row-warning' : ''}`}>
+                  <tr key={k.id} className="border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className={`py-3 px-4 font-bold text-sm ${activeTab === 'unpaid' ? (isOverdue ? 'text-red-500' : '') : 'text-emerald-500'}`}>
                       {activeTab === 'unpaid' ? formatDate(k.dueDate) : formatDate(getPaidDate(k))}
                     </td>
@@ -186,7 +186,7 @@ export default function KasbonPage() {
       </div>
 
       {payModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setPayModal(null)}>
+        <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setPayModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up border border-slate-200/60 dark:border-slate-800" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h3 className="text-lg font-bold">Terima Pembayaran Kasbon</h3>
@@ -210,7 +210,7 @@ export default function KasbonPage() {
         </div>
       )}
       {detailModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setDetailModal(null)}>
+        <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setDetailModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up border border-slate-200/60 dark:border-slate-800 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h3 className="text-lg font-bold">Rincian Nota Kasbon</h3>

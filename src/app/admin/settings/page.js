@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import useStore from '@/lib/store';
 import { uploadImageToDrive } from '@/lib/api';
-import { Settings, Save, QrCode, CreditCard, Loader2 } from 'lucide-react';
+import { Settings, Save, QrCode, CreditCard, Loader2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import { updateAdminCredentials } from '@/app/actions/auth';
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useStore();
   const [bankDetails, setBankDetails] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingCredentials, setIsSavingCredentials] = useState(false);
 
   // Sync state with settings when loaded
   const [prevBankDetails, setPrevBankDetails] = useState(settings?.bankDetails);
@@ -66,6 +68,35 @@ export default function SettingsPage() {
       toast.error('Gagal menyimpan pengaturan');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveCredentials = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const username = form.username.value;
+    const password = form.password.value;
+    if (!username.trim() || !password.trim()) {
+      return toast.error('Username dan password tidak boleh kosong.');
+    }
+    
+    if (password.length < 5) {
+      return toast.error('Password minimal 5 karakter untuk keamanan.');
+    }
+    
+    setIsSavingCredentials(true);
+    try {
+      const res = await updateAdminCredentials(username.trim(), password.trim());
+      if (res.error) {
+        toast.error(res.error);
+      } else {
+        toast.success('Username dan password admin berhasil diubah!');
+        form.reset();
+      }
+    } catch (err) {
+      toast.error('Gagal memperbarui kredensial.');
+    } finally {
+      setIsSavingCredentials(false);
     }
   };
 
@@ -155,6 +186,53 @@ export default function SettingsPage() {
                 <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
               ) : (
                 <><Save className="w-4 h-4" /> Simpan Perubahan</>
+              )}
+            </button>
+          </div>
+        </form>
+
+        <hr className="border-slate-100 dark:border-slate-800" />
+
+        {/* Admin Credentials Settings */}
+        <form onSubmit={handleSaveCredentials} className="space-y-4">
+          <h3 className="text-base font-bold flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+            <Lock className="w-4 h-4" /> Kredensial Akun Admin
+          </h3>
+          <p className="text-xs text-slate-400">Ganti username dan password masuk untuk dashboard admin.</p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-semibold">Username Baru</label>
+              <input
+                type="text"
+                name="username"
+                required
+                placeholder="Username baru"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 border border-slate-200 dark:border-slate-700 outline-none transition-all"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-semibold">Password Baru</label>
+              <input
+                type="password"
+                name="password"
+                required
+                placeholder="Password baru"
+                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 border border-slate-200 dark:border-slate-700 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isSavingCredentials}
+              className="px-6 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 transition-all btn-press flex items-center gap-2 disabled:opacity-50"
+            >
+              {isSavingCredentials ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Mengubah...</>
+              ) : (
+                <><Save className="w-4 h-4" /> Ubah Kredensial</>
               )}
             </button>
           </div>

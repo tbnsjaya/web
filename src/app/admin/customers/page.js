@@ -81,7 +81,7 @@ export default function CustomersPage() {
 
       {/* Edit Modal */}
       {editModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setEditModal(null)}>
+        <div className="fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={() => setEditModal(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md animate-slide-up border border-slate-200/60 dark:border-slate-800" onClick={(e) => e.stopPropagation()}>
             <form onSubmit={handleEdit}>
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">

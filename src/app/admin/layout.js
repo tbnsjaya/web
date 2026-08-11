@@ -34,7 +34,7 @@ export default function AdminLayout({ children }) {
 
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="fixed inset-0 bg-white/70 dark:bg-slate-950/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center">
+        <div className="fixed inset-0 bg-white/90 dark:bg-slate-950/95 z-[9999] flex flex-col items-center justify-center">
           <div className="w-12 h-12 border-4 border-slate-200 dark:border-slate-700 border-t-indigo-500 rounded-full animate-spin-slow" />
           <p className="mt-4 font-bold text-indigo-600 dark:text-indigo-400">{loadingText}</p>
         </div>
