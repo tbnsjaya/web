@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import useStore from '@/lib/store';
-import { formatCurrency } from '@/lib/utils';
-import { X } from 'lucide-react';
+import { formatCurrency, formatWAPhone } from '@/lib/utils';
+import { X, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function KasbonPage() {
@@ -57,6 +57,15 @@ export default function KasbonPage() {
     payKasbon(payModal.id, amt);
     setPayModal(null);
     toast.success('Kasbon dibayar.');
+  };
+
+  const handleSendReminder = (k) => {
+    if (!k.customerDetails?.phone) return toast.error('Nomor telepon pelanggan tidak tersedia.');
+    const waPhone = formatWAPhone(k.customerDetails.phone);
+    const dateStr = new Date(k.date).toLocaleDateString('id-ID');
+    const dueDateStr = formatDate(k.dueDate);
+    const text = `Halo *${k.customerDetails.name}*,\n\nKami dari *TB NS JAYA* ingin mengingatkan mengenai catatan kasbon Anda:\n- *No. Invoice*: ${k.id}\n- *Tanggal Transaksi*: ${dateStr}\n- *Sisa Tagihan*: *${formatCurrency(k.remaining)}*\n- *Jatuh Tempo*: *${dueDateStr}*\n\nMohon untuk segera melakukan pelunasan pembayaran. Terima kasih banyak atas kerja samanya. 🙏`;
+    window.open(`https://api.whatsapp.com/send?phone=${waPhone}&text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -151,7 +160,14 @@ export default function KasbonPage() {
                       <div className="flex items-center justify-center gap-2">
                         <button onClick={() => setDetailModal(k)} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all btn-press">Detail</button>
                         {activeTab === 'unpaid' && (
-                          <button onClick={() => setPayModal(k)} className="px-3 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 shadow-sm transition-all btn-press">Bayar</button>
+                          <>
+                            {k.customerDetails?.phone && (
+                              <button onClick={() => handleSendReminder(k)} className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-xl text-xs font-bold transition-all btn-press flex items-center gap-1" title="Kirim Pengingat WhatsApp">
+                                <MessageCircle className="w-3.5 h-3.5" /> WA
+                              </button>
+                            )}
+                            <button onClick={() => setPayModal(k)} className="px-3 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 shadow-sm transition-all btn-press">Bayar</button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -210,7 +226,17 @@ export default function KasbonPage() {
                   <div className="flex justify-between"><span>Tanggal:</span><span>{new Date(detailModal.date).toLocaleString('id-ID')}</span></div>
                   <div className="flex justify-between"><span>Jatuh Tempo:</span><span className="text-red-500 font-bold">{formatDate(detailModal.dueDate)}</span></div>
                   <div className="flex justify-between"><span>Pelanggan:</span><span className="font-bold">{detailModal.customerDetails?.name || '-'}</span></div>
-                  <div className="flex justify-between"><span>No. HP/WA:</span><span>{detailModal.customerDetails?.phone || '-'}</span></div>
+                  <div className="flex justify-between items-center">
+                    <span>No. HP/WA:</span>
+                    <div className="flex items-center gap-1">
+                      <span>{detailModal.customerDetails?.phone || '-'}</span>
+                      {!detailModal.isPaid && detailModal.customerDetails?.phone && (
+                        <button onClick={() => handleSendReminder(detailModal)} className="text-green-500 hover:text-green-600 transition-colors p-1" title="Kirim Pengingat WhatsApp">
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
