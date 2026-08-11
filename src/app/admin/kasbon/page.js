@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 export default function KasbonPage() {
   const { sales, items, payKasbon } = useStore();
   const [sortBy, setSortBy] = useState('due-date-asc');
+  const [activeTab, setActiveTab] = useState('unpaid'); // 'unpaid' | 'paid'
   const [payModal, setPayModal] = useState(null);
   const [detailModal, setDetailModal] = useState(null);
 
@@ -22,15 +23,29 @@ export default function KasbonPage() {
     return d.toLocaleDateString('id-ID');
   };
 
+  const getPaidDate = (item) => {
+    if (!item.paymentHistory || item.paymentHistory.length === 0) return item.date;
+    const sortedHistory = [...item.paymentHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+    return sortedHistory[0]?.date || item.date;
+  };
+
   const unpaidKasbons = useMemo(() => {
-    let list = sales.filter((s) => s.isKasbon && !s.isPaid).map((s) => ({ ...s, remaining: s.totalPrice - s.paidAmount }));
+    return sales.filter((s) => s.isKasbon && !s.isPaid).map((s) => ({ ...s, remaining: s.totalPrice - s.paidAmount }));
+  }, [sales]);
+
+  const filteredKasbons = useMemo(() => {
+    let list = sales.filter((s) => s.isKasbon && (activeTab === 'unpaid' ? !s.isPaid : s.isPaid)).map((s) => ({ ...s, remaining: s.totalPrice - s.paidAmount }));
     list.sort((a, b) => {
       if (sortBy === 'due-date-asc') return new Date(a.dueDate) - new Date(b.dueDate);
-      if (sortBy === 'amount-desc') return b.remaining - a.remaining;
+      if (sortBy === 'amount-desc') {
+        const valA = activeTab === 'unpaid' ? a.remaining : a.totalPrice;
+        const valB = activeTab === 'unpaid' ? b.remaining : b.totalPrice;
+        return valB - valA;
+      }
       return new Date(b.date) - new Date(a.date);
     });
     return list;
-  }, [sales, sortBy]);
+  }, [sales, sortBy, activeTab]);
 
   const totalKasbon = unpaidKasbons.reduce((sum, k) => sum + k.remaining, 0);
   const due7Days = unpaidKasbons.filter((k) => k.dueDate && new Date(k.dueDate) <= in7Days).reduce((sum, k) => sum + k.remaining, 0);
@@ -56,25 +71,65 @@ export default function KasbonPage() {
           <p className="text-2xl md:text-3xl font-extrabold text-red-500">{formatCurrency(due7Days)}</p>
         </div>
       </div>
-
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm">
-        <div className="p-4 flex justify-end border-b border-slate-100 dark:border-slate-800">
+        <div className="p-4 flex flex-col sm:flex-row gap-3 items-center justify-between border-b border-slate-100 dark:border-slate-800">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('unpaid')}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'unpaid'
+                  ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
+                  : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              Belum Lunas
+            </button>
+            <button
+              onClick={() => setActiveTab('paid')}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'paid'
+                  ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25'
+                  : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              Sudah Lunas
+            </button>
+          </div>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-full text-sm border-none focus:ring-2 focus:ring-indigo-500/20 focus:outline-none">
             <option value="due-date-asc">Jatuh Tempo Terdekat</option>
-            <option value="amount-desc">Tagihan Terbesar</option>
+            <option value="amount-desc">{activeTab === 'unpaid' ? 'Tagihan Terbesar' : 'Total Kasbon Terbesar'}</option>
             <option value="date-desc">Transaksi Terbaru</option>
           </select>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead><tr className="border-b-2 border-slate-100 dark:border-slate-800"><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Jatuh Tempo</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Pelanggan</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Detail Barang</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-right">Sisa Tagihan</th><th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-center">Aksi</th></tr></thead>
+            <thead>
+              {activeTab === 'unpaid' ? (
+                <tr className="border-b-2 border-slate-100 dark:border-slate-800">
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Jatuh Tempo</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Pelanggan</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Detail Barang</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-right">Sisa Tagihan</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-center">Aksi</th>
+                </tr>
+              ) : (
+                <tr className="border-b-2 border-slate-100 dark:border-slate-800">
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Tanggal Lunas</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Pelanggan</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase">Detail Barang</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-right">Total Kasbon</th>
+                  <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase text-center">Aksi</th>
+                </tr>
+              )}
+            </thead>
             <tbody>
-              {unpaidKasbons.length > 0 ? unpaidKasbons.map((k) => {
-                const item = items.find((i) => i.id === k.itemId);
+              {filteredKasbons.length > 0 ? filteredKasbons.map((k) => {
                 const isOverdue = k.dueDate && new Date(k.dueDate) < now;
                 return (
-                  <tr key={k.id} className={`border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${isOverdue ? 'row-warning' : ''}`}>
-                    <td className={`py-3 px-4 font-bold text-sm ${isOverdue ? 'text-red-500' : ''}`}>{formatDate(k.dueDate)}</td>
+                  <tr key={k.id} className={`border-b border-slate-100/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${activeTab === 'unpaid' && isOverdue ? 'row-warning' : ''}`}>
+                    <td className={`py-3 px-4 font-bold text-sm ${activeTab === 'unpaid' ? (isOverdue ? 'text-red-500' : '') : 'text-emerald-500'}`}>
+                      {activeTab === 'unpaid' ? formatDate(k.dueDate) : formatDate(getPaidDate(k))}
+                    </td>
                     <td className="py-3 px-4"><p className="font-bold text-sm">{k.customerDetails?.name}</p><p className="text-xs text-slate-400">{k.customerDetails?.phone}</p></td>
                     <td className="py-3 px-4 text-sm text-slate-500 max-w-xs truncate">
                       {Array.isArray(k.items) ? (
@@ -89,16 +144,26 @@ export default function KasbonPage() {
                         })()
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-amber-500">{formatCurrency(k.remaining)}</td>
+                    <td className={`py-3 px-4 text-right font-bold ${activeTab === 'unpaid' ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {formatCurrency(activeTab === 'unpaid' ? k.remaining : k.totalPrice)}
+                    </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button onClick={() => setDetailModal(k)} className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all btn-press">Detail</button>
-                        <button onClick={() => setPayModal(k)} className="px-3 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 shadow-sm transition-all btn-press">Bayar</button>
+                        {activeTab === 'unpaid' && (
+                          <button onClick={() => setPayModal(k)} className="px-3 py-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 shadow-sm transition-all btn-press">Bayar</button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 );
-              }) : <tr><td colSpan={5} className="py-12 text-center text-slate-400">Tidak ada kasbon pelanggan.</td></tr>}
+              }) : (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                    {activeTab === 'unpaid' ? 'Tidak ada kasbon pelanggan.' : 'Belum ada riwayat kasbon lunas.'}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

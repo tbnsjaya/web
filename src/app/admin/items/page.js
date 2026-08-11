@@ -15,6 +15,7 @@ export default function ItemsPage() {
   const [editingItem, setEditingItem] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [newItemCode, setNewItemCode] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const openAddModal = () => {
     setNewItemCode(`BRG-${Date.now().toString().slice(-5)}`);
